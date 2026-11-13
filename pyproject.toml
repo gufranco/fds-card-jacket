@@ -1,0 +1,14 @@
+[project]
+name = "fds-card-jacket"
+version = "5.0.0"
+description = "Generator for printable Famicom Disk System paper jackets, envelopes, cases, covers and labels"
+requires-python = ">=3.13"
+dependencies = [
+    "fonttools==4.68.0",
+    "pymupdf==2.1",
+    "pymupdf-fonts==1.0.5",
+    "shapely==2.2.0",
+]
+
+[tool.uv]
+package = false
