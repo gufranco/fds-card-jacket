@@ -8,15 +8,15 @@
 
 ## What is in the kit
 
-Every sheet is in [`pdf/`](pdf/), sized for A4.
+Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item.
 
-| Item | Sheet | Holds |
-|:-----|:------|:------|
-| Card jacket | `FDS-Card-Jacket_A4_3up_*` | Three jackets that slide over a bare disk card |
-| Envelope | `FDS-Disk-Envelope_A4_1up_*`, `FDS-Disk-Envelope_A4_2up_*` | A kraft-style pouch with a long tuck flap |
-| Case | `FDS-Disk-Case_A4-landscape_1up_*` | A cardstock box with tuck ends |
-| Cover | `FDS-Disk-Cover_A4-landscape_3up_*` | Three obi strips that wrap the case |
-| Labels | `FDS-Disk-Label_A4_30up_*` | Thirty side A and side B labels |
+| Item | Folder | Holds |
+|:-----|:-------|:------|
+| Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card |
+| Envelope | [`sheets/envelope/`](sheets/envelope/) | A kraft-style pouch with a long tuck flap |
+| Case | [`sheets/case/`](sheets/case/) | A cardstock box with tuck ends |
+| Cover | [`sheets/cover/`](sheets/cover/) | Three obi strips per sheet that wrap the case |
+| Labels | [`sheets/labels/`](sheets/labels/) | Thirty side A and side B labels per sheet |
 
 ## Which file to print
 
@@ -61,13 +61,15 @@ The folds that wrap a disk leave 4 mm for its 3 mm thickness.
 The generator needs macOS, for the Hiragino Maru Gothic font, and [uv](https://docs.astral.sh/uv/). From the repository root:
 
 ```bash
-uv run python -I tools/fds_kit.py FDS-Card-Jacket_A4_3up_Color_v1.pdf pdf wide
-uv run python -I tools/fds_kit.py FDS-Card-Jacket_A4_3up_Color_v1.pdf pdf standard
-uv run python -I tools/fds_kit.py FDS-Card-Jacket_A4_3up_Color_v1.pdf pdf square
-uv run python -I tools/fds_kit.py FDS-Card-Jacket_A4_3up_Color_v1.pdf pdf square-standard
+uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets wide
+uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets standard
+uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square
+uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square-standard
 ```
 
-The artwork comes from [`FDS-Card-Jacket_A4_3up_Color_v1.pdf`](FDS-Card-Jacket_A4_3up_Color_v1.pdf), the original jacket sheet, kept with its black-only twin [`FDS-Card-Jacket_A4_3up_Mono_v1.pdf`](FDS-Card-Jacket_A4_3up_Mono_v1.pdf).
+Each command writes into the item folders under [`sheets/`](sheets/).
+
+The artwork comes from [`artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf`](artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf), the original jacket sheet, kept with its black-only twin [`artwork/FDS-Card-Jacket_A4_3up_Mono_v1.pdf`](artwork/FDS-Card-Jacket_A4_3up_Mono_v1.pdf). Both still print on their own.
 
 ## Trademarks
 

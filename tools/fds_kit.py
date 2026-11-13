@@ -32,6 +32,13 @@ SQUARE_DUST_FLAP_MM = 8.0
 SQUARE_THUMB_MM = (14.0, 4.0)
 SQUARE_ENVELOPE_NOTCH_MM = (16.0, 6.0)
 SQUARE_JACKET_NOTCH_INSET_MM = 11.0
+ITEM_FOLDERS = {
+    "Card-Jacket": "card-jacket",
+    "Disk-Envelope": "envelope",
+    "Disk-Case": "case",
+    "Disk-Cover": "cover",
+    "Disk-Label": "labels",
+}
 WIDE_GLUE = {"jacket": 15.0, "envelope": 15.0, "case": 18.0}
 STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5, "case": 12.0}
 ENVELOPE_NEST_GAP_MM = 4.0
@@ -1247,10 +1254,17 @@ def sheet_sets(which: str) -> tuple[SheetSet, SheetSet, str]:
     return sheets(gang=True), sheets(gang=False), "v4"
 
 
+def item_folder(out_dir: str, key: str) -> Path:
+    prefix = next(p for p in ITEM_FOLDERS if key.startswith(f"{p}_"))
+    folder = Path(out_dir) / ITEM_FOLDERS[prefix]
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
+
 def main(template: str, out_dir: str, which: str) -> None:
-    folder = Path(out_dir)
     home_sheets, shop_sheets, version = sheet_sets(which)
     for key, (sheet, page_mm) in home_sheets.items():
+        folder = item_folder(out_dir, key)
         cut = "KissCut" if "Label" in key else "DieCut-Crease"
         shop_sheet, shop_page = shop_sheets[key]
         render(
