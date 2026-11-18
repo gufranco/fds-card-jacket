@@ -29,7 +29,7 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 
 - Every outer corner of every piece is rounded with the finishing punch.
 - Every place where a fold line meets a cut edge gets a notch made with the finishing punch.
-- Every notch site carries a very subtle mark centered on the notch, as the guide for lining up the punch. The mark is no darker or thicker than the fold lines. On the cover it sits at the middle of the spine on each side edge.
+- Every notch site carries a guide mark centered on the notch, for lining up the punch. The mark is very subtle and hard to see, so it never shows on the finished piece: a 1 mm tick at 20 percent black and 0.2 pt, lighter and thinner than the fold lines, running from the cut edge into the area the notch removes. The values are `NOTCH_GUIDE_MM`, `NOTCH_GUIDE_GRAY` and `NOTCH_GUIDE_WIDTH` in the generator. On the cover it sits at the middle of the spine on each side edge.
 - The corner radius and notch size are unknown. Measure a punched sample and record both in the table above before a sheet depends on either value.
 - Cut and fold lines are straight: no curves. [`tools/check_curves.py`](tools/check_curves.py) checks it. The only curves on a finished piece come from the finishing punch.
 - Cut lines are as faint as fold lines, and fold dashes stay sparse.

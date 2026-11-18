@@ -14,6 +14,9 @@ LINE_GRAY = (0, 0, 0, 0.38)
 HOME_LINE_WIDTH = 0.3
 HOME_HALO_WIDTH = 1.2
 HOME_FOLD_DASHES = "[1.5 13.5] 0"
+NOTCH_GUIDE_GRAY = (0, 0, 0, 0.2)
+NOTCH_GUIDE_WIDTH = 0.2
+NOTCH_GUIDE_MM = 1.0
 CARD_THICKNESS_MM = 3.0
 TOLERANCE_MM = 1.0
 GUSSET = CARD_THICKNESS_MM + TOLERANCE_MM
@@ -88,6 +91,7 @@ class Item:
     art: tuple[Element, ...]
     glue: tuple[Point, ...] = field(default_factory=tuple)
     zones: tuple[Polygon, ...] = field(default_factory=tuple)
+    notch_guides: tuple[tuple[Point, Point], ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -339,7 +343,9 @@ def cover() -> Item:
         Clip("logo", (w / 2, 70)),
         Clip("warning", (w / 2, front + spine_h + back / 2), 180),
     )
-    return Item(outline, creases, art)
+    mid = front + spine_h / 2
+    guides = (((0, mid), (NOTCH_GUIDE_MM, mid)), ((w, mid), (w - NOTCH_GUIDE_MM, mid)))
+    return Item(outline, creases, art, notch_guides=guides)
 
 
 def rectangle(x0: float, y0: float, x1: float, y1: float) -> Polygon:
@@ -647,6 +653,17 @@ def draw_lines(ctx: Context, item: Item, place: Placement) -> None:
         color=LINE_GRAY, width=HOME_LINE_WIDTH, closePath=True, oc=ctx.layers["art"]
     )
     cut.commit()
+    draw_notch_guides(ctx, item, place)
+
+
+def draw_notch_guides(ctx: Context, item: Item, place: Placement) -> None:
+    if not item.notch_guides:
+        return
+    shape = ctx.page.new_shape()
+    for a, b in item.notch_guides:
+        shape.draw_line(to_pt(place.apply(a)), to_pt(place.apply(b)))
+    shape.finish(color=NOTCH_GUIDE_GRAY, width=NOTCH_GUIDE_WIDTH, oc=ctx.layers["art"])
+    shape.commit()
 
 
 def draw_zones(ctx: Context, item: Item, place: Placement) -> None:
