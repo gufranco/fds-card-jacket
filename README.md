@@ -13,7 +13,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 | Item | Folder | Holds |
 |:-----|:-------|:------|
 | Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card; every cut is horizontal or vertical |
-| Envelope | [`sheets/envelope/`](sheets/envelope/) | One kraft-style pouch per sheet with a tuck flap; every cut is horizontal or vertical. `TabLock` closes with two tabs and slits, the other with 25 mm glue flaps |
+| Envelope | [`sheets/envelope/`](sheets/envelope/) | One kraft-style pouch per sheet with a tuck flap; every cut is horizontal or vertical. `TabLock` closes with three tabs and slits on each side, the other with 25 mm glue flaps |
 | Cover | [`sheets/cover/`](sheets/cover/) | Three folded obi strips per sheet |
 
 ## Which file to print
@@ -46,7 +46,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 1. Cut every piece out.
 2. Score and fold every dashed line, and test the fit before any glue goes on.
 3. Glue the side and top flaps of each card jacket and the two side flaps of the glued envelope, and press until the glue sets.
-4. On the `TabLock` envelope, cut the two short slits in the back panel. Fold each side flap inside against the back panel, then push its tab out through the slit until the narrow neck sits in it.
+4. On the `TabLock` envelope, cut the six short slits near the edges of the back panel. Fold the front up against the back, wrap each narrow side flap around the outside of the back panel's edge, and push its three tabs into the slits until each narrow neck sits in its slit.
 5. Optional: round every outer corner with a corner punch, and notch each fold end that has a faint tick at the cut edge. Leave the square shoulders of the tabs as they are.
 
 The folds that wrap a disk leave 4 mm for its 3 mm thickness.

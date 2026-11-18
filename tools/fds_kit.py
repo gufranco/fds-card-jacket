@@ -24,7 +24,8 @@ SQUARE_RELIEF_MM = 2.0
 SQUARE_JACKET_NOTCH_INSET_MM = 11.0
 ENVELOPE_GLUE_MM = 25.0
 ENVELOPE_FLAP_OFFSET_MM = 10.0
-LOCK_FLAP_MM = 15.0
+LOCK_FLAP_MM = 3.0
+LOCK_TAB_HEIGHTS_MM = (20.0, 47.5, 75.0)
 TAB_HEAD_MM = 10.0
 TAB_NECK_MM = 6.0
 TAB_NECK_LENGTH_MM = 2.0
@@ -277,9 +278,10 @@ def lock_tab(edge_x: float, center: float, outward: float) -> tuple[Point, ...]:
     )
 
 
-def envelope_lock_outline(f: EnvelopeFrame, center: float) -> Polygon:
-    right = lock_tab(f.width + f.flap, center, 1.0)
-    left = tuple(reversed(lock_tab(-f.flap, center, -1.0)))
+def envelope_lock_outline(f: EnvelopeFrame) -> Polygon:
+    centers = sorted(f.bottom + h for h in LOCK_TAB_HEIGHTS_MM)
+    right = tuple(p for c in centers for p in lock_tab(f.width + f.flap, c, 1.0))
+    left = tuple(reversed([p for c in centers for p in lock_tab(-f.flap, c, -1.0)]))
     return (
         (0, 0),
         (f.width, 0),
@@ -294,24 +296,24 @@ def envelope_lock_outline(f: EnvelopeFrame, center: float) -> Polygon:
     )
 
 
-def envelope_slits(f: EnvelopeFrame, center: float) -> tuple[tuple[Point, Point], ...]:
-    back_y = 2 * f.bottom - GUSSET - center
+def envelope_slits(f: EnvelopeFrame) -> tuple[tuple[Point, Point], ...]:
     inset = f.flap - GUSSET + TAB_NECK_LENGTH_MM / 2
     half = TAB_SLIT_MM / 2
     return tuple(
-        ((x, back_y - half), (x, back_y + half)) for x in (inset, f.width - inset)
+        ((x, back_y - half), (x, back_y + half))
+        for back_y in (f.bottom - GUSSET - h for h in LOCK_TAB_HEIGHTS_MM)
+        for x in (inset, f.width - inset)
     )
 
 
 def envelope_lock() -> Item:
     f = envelope_frame(LOCK_FLAP_MM)
-    center = f.shoulder + TAB_HEAD_MM / 2
     return Item(
-        envelope_lock_outline(f, center),
+        envelope_lock_outline(f),
         envelope_creases(f),
         envelope_art(f),
         envelope_guides(f),
-        envelope_slits(f, center),
+        envelope_slits(f),
     )
 
 

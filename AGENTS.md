@@ -22,7 +22,7 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 | Sheet | Rounded corners | Notches |
 |:------|:----------------|:--------|
 | Cover | All four corners of each cover | Both side edges at the spine, one notch spanning its two fold lines |
-| Envelope, `TabLock` | The two tuck flap corners, the two flap corners at the opening and the two outer corners of each tab head | Same as the glued envelope |
+| Envelope, `TabLock` | The two tuck flap corners, the four side flap corners and the two outer corners of each tab head | Same as the glued envelope |
 | Envelope | The two tuck flap corners and the four glue flap corners | Both side edges at the top fold and at the bottom fold, and the opening edge at each side wall; each notch spans its two fold lines |
 
 ## Hard rules
@@ -54,7 +54,7 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 - Glue flaps are large by default, and `StdGlue` card jackets use the smaller widths.
 - Glue areas are blank: no gray tint and no `のりしろ` label on any sheet, and the ruler legend names only cut and fold lines.
 - The envelope is a 1-up sheet: only right angles, a full-width tuck flap, and side flaps that start 10 mm below the bottom fold, so a punch has room to notch that fold, and end flush with the opening, so the opening is one straight cut. The glued v6 has 25 mm glue flaps and no steps.
-- The `TabLock` envelope, v7, needs no glue: each 15 mm side flap folds inside against the back panel and carries a T-tab, a 10 mm head on a 6 mm neck 2 mm long, that pushes out through an 8 mm slit in the back panel. The slit is 2 mm shorter than the head, so the head squeezes through and its square shoulders catch. The tabs sit at the bottom of the back panel, the only band there free of artwork. The values are `LOCK_FLAP_MM` and the `TAB_*` constants in the generator.
+- The `TabLock` envelope, v7, needs no glue: each side flap is a 3 mm strip that wraps around the outside of the back panel's edge, and carries three T-tabs, each a 10 mm head on a 6 mm neck 2 mm long, at 20, 47.5 and 75 mm above the bottom fold. Each tab pushes into an 8 mm slit 4 mm from the back panel's edge, so the heads end up hidden inside. The slit is 2 mm shorter than the head, so the head squeezes through and its square shoulders catch. Only these edge strips of the back panel are free of artwork along the full height; every slit keeps at least 1.6 mm from the art. The values are `LOCK_FLAP_MM`, `LOCK_TAB_HEIGHTS_MM` and the `TAB_*` constants in the generator.
 - The three covers on the cover sheet sit 4 mm apart, so each has its own cut outline.
 - A new variant is a new file. An existing sheet changes only when the owner names it.
 - Regenerating every mode stays pixel-identical to the committed sheets. Run [`tools/compare_renders.py`](tools/compare_renders.py) in both directions, because it reports only sheets missing from its second argument.
