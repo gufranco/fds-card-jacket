@@ -24,6 +24,12 @@ SQUARE_RELIEF_MM = 2.0
 SQUARE_JACKET_NOTCH_INSET_MM = 11.0
 ENVELOPE_GLUE_MM = 25.0
 ENVELOPE_FLAP_OFFSET_MM = 10.0
+LOCK_FLAP_MM = 15.0
+TAB_HEAD_MM = 10.0
+TAB_NECK_MM = 6.0
+TAB_NECK_LENGTH_MM = 2.0
+TAB_HEAD_LENGTH_MM = 6.0
+TAB_SLIT_MM = TAB_HEAD_MM - 2.0
 ITEM_FOLDERS = {
     "Card-Jacket": "card-jacket",
     "Disk-Envelope": "envelope",
@@ -87,6 +93,7 @@ class Item:
     creases: tuple[tuple[Point, Point], ...]
     art: tuple[Element, ...]
     notch_guides: tuple[tuple[Point, Point], ...] = field(default_factory=tuple)
+    slits: tuple[tuple[Point, Point], ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -181,7 +188,7 @@ class EnvelopeFrame:
     flap: float
 
 
-def envelope_frame() -> EnvelopeFrame:
+def envelope_frame(flap_width: float) -> EnvelopeFrame:
     w, h, tip = 80.0, 95.0, 31.0
     tuck = tip + GUSSET
     bottom = tuck + h + GUSSET
@@ -191,7 +198,7 @@ def envelope_frame() -> EnvelopeFrame:
         bottom=bottom,
         opening=bottom + h,
         shoulder=bottom + ENVELOPE_FLAP_OFFSET_MM,
-        flap=GUSSET + ENVELOPE_GLUE_MM,
+        flap=GUSSET + flap_width,
     )
 
 
@@ -233,21 +240,78 @@ def envelope_guides(f: EnvelopeFrame) -> tuple[tuple[Point, Point], ...]:
     return side + opening
 
 
-def envelope() -> Item:
-    f = envelope_frame()
+def envelope_art(f: EnvelopeFrame) -> tuple[Element, ...]:
     w = f.width
-    art = (
+    return (
         Clip("envelope_title", (w / 2, f.opening - 30), 180),
         Clip("envelope_notice", (w / 2, f.opening - 52), 180),
         Clip("logo", (w / 2, f.bottom + 12), 180),
         Clip("warning", (w / 2, f.tuck + 30)),
         Clip("envelope_flap", (w / 2, f.tuck + 70)),
     )
+
+
+def envelope() -> Item:
+    f = envelope_frame(ENVELOPE_GLUE_MM)
     return Item(
         envelope_outline(f),
         envelope_creases(f),
-        art,
+        envelope_art(f),
         envelope_guides(f),
+    )
+
+
+def lock_tab(edge_x: float, center: float, outward: float) -> tuple[Point, ...]:
+    neck, head = TAB_NECK_MM / 2, TAB_HEAD_MM / 2
+    base = edge_x + outward * TAB_NECK_LENGTH_MM
+    tip = base + outward * TAB_HEAD_LENGTH_MM
+    return (
+        (edge_x, center - neck),
+        (base, center - neck),
+        (base, center - head),
+        (tip, center - head),
+        (tip, center + head),
+        (base, center + head),
+        (base, center + neck),
+        (edge_x, center + neck),
+    )
+
+
+def envelope_lock_outline(f: EnvelopeFrame, center: float) -> Polygon:
+    right = lock_tab(f.width + f.flap, center, 1.0)
+    left = tuple(reversed(lock_tab(-f.flap, center, -1.0)))
+    return (
+        (0, 0),
+        (f.width, 0),
+        (f.width, f.shoulder),
+        (f.width + f.flap, f.shoulder),
+        *right,
+        (f.width + f.flap, f.opening),
+        (-f.flap, f.opening),
+        *left,
+        (-f.flap, f.shoulder),
+        (0, f.shoulder),
+    )
+
+
+def envelope_slits(f: EnvelopeFrame, center: float) -> tuple[tuple[Point, Point], ...]:
+    back_y = 2 * f.bottom - GUSSET - center
+    inset = f.flap - GUSSET + TAB_NECK_LENGTH_MM / 2
+    half = TAB_SLIT_MM / 2
+    return tuple(
+        ((x, back_y - half), (x, back_y + half)) for x in (inset, f.width - inset)
+    )
+
+
+def envelope_lock() -> Item:
+    f = envelope_frame(LOCK_FLAP_MM)
+    center = f.shoulder + TAB_HEAD_MM / 2
+    return Item(
+        envelope_lock_outline(f, center),
+        envelope_creases(f),
+        envelope_art(f),
+        envelope_guides(f),
+        envelope_slits(f, center),
     )
 
 
@@ -490,16 +554,23 @@ def draw_lines(ctx: Context, item: Item, place: Placement) -> None:
         color=LINE_GRAY, width=HOME_LINE_WIDTH, closePath=True, oc=ctx.layers["art"]
     )
     cut.commit()
-    draw_notch_guides(ctx, item, place)
+    draw_segments(ctx, item.slits, place, LINE_GRAY, HOME_LINE_WIDTH)
+    draw_segments(ctx, item.notch_guides, place, NOTCH_GUIDE_GRAY, NOTCH_GUIDE_WIDTH)
 
 
-def draw_notch_guides(ctx: Context, item: Item, place: Placement) -> None:
-    if not item.notch_guides:
+def draw_segments(
+    ctx: Context,
+    segments: tuple[tuple[Point, Point], ...],
+    place: Placement,
+    color: tuple[float, ...],
+    width: float,
+) -> None:
+    if not segments:
         return
     shape = ctx.page.new_shape()
-    for a, b in item.notch_guides:
+    for a, b in segments:
         shape.draw_line(to_pt(place.apply(a)), to_pt(place.apply(b)))
-    shape.finish(color=NOTCH_GUIDE_GRAY, width=NOTCH_GUIDE_WIDTH, oc=ctx.layers["art"])
+    shape.finish(color=color, width=width, oc=ctx.layers["art"])
     shape.commit()
 
 
@@ -625,14 +696,15 @@ def square_sheets(
     }
 
 
-def envelope_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
-    env = envelope()
-    box = polygon_bbox(env.outline)
+def single_sheet(
+    key: str, item: Item
+) -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
+    box = polygon_bbox(item.outline)
     offset = (
         (A4[0] - (box[2] - box[0])) / 2,
         (A4[1] - (box[3] - box[1]) - 10) / 2,
     )
-    return {"Disk-Envelope_A4_1up": ([(env, Placement(offset, False, box))], A4)}
+    return {key: ([(item, Placement(offset, False, box))], A4)}
 
 
 SheetSet = dict[str, tuple[list[tuple[Item, Placement]], Point]]
@@ -643,11 +715,14 @@ def sheet_sets(which: str) -> tuple[SheetSet, str]:
         glue = STANDARD_GLUE if which == "square-standard" else WIDE_GLUE
         return square_sheets(glue, which == "square-standard"), "v5"
     if which == "envelope":
-        return envelope_sheets(), "v6"
+        return single_sheet("Disk-Envelope_A4_1up", envelope()), "v6"
+    if which == "envelope-lock":
+        return single_sheet("Disk-Envelope_A4_1up_TabLock", envelope_lock()), "v7"
     if which == "cover":
         return cover_sheets(), "v4"
     raise ValueError(
-        f"unknown mode {which!r}: use cover, square, square-standard or envelope"
+        f"unknown mode {which!r}: use cover, square, square-standard, envelope"
+        " or envelope-lock"
     )
 
 

@@ -13,7 +13,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 | Item | Folder | Holds |
 |:-----|:-------|:------|
 | Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card; every cut is horizontal or vertical |
-| Envelope | [`sheets/envelope/`](sheets/envelope/) | One kraft-style pouch per sheet with a tuck flap and 25 mm glue flaps; every cut is horizontal or vertical |
+| Envelope | [`sheets/envelope/`](sheets/envelope/) | One kraft-style pouch per sheet with a tuck flap; every cut is horizontal or vertical. `TabLock` closes with two tabs and slits, the other with 25 mm glue flaps |
 | Cover | [`sheets/cover/`](sheets/cover/) | Three folded obi strips per sheet |
 
 ## Which file to print
@@ -22,13 +22,14 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 |:--------------|:------------|
 | `Square` | You want the card jacket with large glue flaps |
 | `Square_StdGlue` | You prefer smaller glue flaps on the card jacket |
+| `TabLock` | You want the envelope to close without glue or tape |
 
 ## What you need
 
 - An A4 printer and 120 to 180 g/m2 paper
 - Scissors, or a craft knife and a metal ruler
-- The Toke e Crie corner and notch punch, reference 17671, to round corners and notch fold ends
-- A glue stick or 6 to 12 mm double-sided tape
+- A glue stick or 6 to 12 mm double-sided tape, for the card jackets and the glued envelope
+- Optional: a corner and notch punch, such as Toke e Crie reference 17671, to round corners and notch fold ends
 
 ## Print
 
@@ -44,8 +45,9 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 
 1. Cut every piece out.
 2. Score and fold every dashed line, and test the fit before any glue goes on.
-3. Glue the side and top flaps of each card jacket and the two side flaps of the envelope, and press until the glue sets.
-4. Round every outer corner with the punch, and notch each fold end that has a faint tick at the cut edge.
+3. Glue the side and top flaps of each card jacket and the two side flaps of the glued envelope, and press until the glue sets.
+4. On the `TabLock` envelope, cut the two short slits in the back panel. Fold each side flap inside against the back panel, then push its tab out through the slit until the narrow neck sits in it.
+5. Optional: round every outer corner with a corner punch, and notch each fold end that has a faint tick at the cut edge. Leave the square shoulders of the tabs as they are.
 
 The folds that wrap a disk leave 4 mm for its 3 mm thickness.
 
@@ -58,6 +60,7 @@ uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sh
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square-standard
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets envelope
+uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets envelope-lock
 ```
 
 Each command writes into the item folders under [`sheets/`](sheets/).
