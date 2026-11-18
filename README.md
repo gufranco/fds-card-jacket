@@ -8,7 +8,7 @@
 
 ## What is in the kit
 
-Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item.
+Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed with black ink only.
 
 | Item | Folder | Holds |
 |:-----|:-------|:------|
@@ -21,8 +21,6 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item.
 
 | Name contains | Use it when |
 |:--------------|:------------|
-| `HomePrint-Color` | You print at home in color |
-| `HomePrint-Mono` | You print at home with black ink only |
 | `Square` | You cut with scissors and round the corners with a corner punch; every cut is horizontal or vertical |
 | `StdGlue` | You prefer smaller glue flaps; the envelope comes only in this variant |
 

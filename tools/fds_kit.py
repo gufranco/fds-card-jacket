@@ -9,7 +9,6 @@ MM = 72 / 25.4
 A4 = (210.0, 297.0)
 A4_LANDSCAPE = (297.0, 210.0)
 BLACK = (0, 0, 0, 1)
-RED = (0, 1, 1, 0)
 WHITE = (0, 0, 0, 0)
 LINE_GRAY = (0, 0, 0, 0.38)
 HOME_LINE_WIDTH = 0.3
@@ -57,7 +56,7 @@ FONTS = {
 
 Point = tuple[float, float]
 Polygon = tuple[Point, ...]
-Segment = tuple[str, str, bool]
+Segment = tuple[str, str]
 
 
 @dataclass(frozen=True)
@@ -114,11 +113,10 @@ class Context:
     source: pymupdf.Document
     pages: dict[str, tuple[int, pymupdf.Rect]]
     layers: dict[str, int]
-    mono: bool
 
 
-def seg(text: str, ruby: str = "", red: bool = False) -> Segment:
-    return text, ruby, red
+def seg(text: str, ruby: str = "") -> Segment:
+    return text, ruby
 
 
 BLOCKS: dict[str, Block] = {
@@ -128,13 +126,13 @@ BLOCKS: dict[str, Block] = {
     "envelope_notice": Block(
         (
             (
-                seg("※", red=True),
-                seg("使用後", "しようご", True),
-                seg("は", red=True),
-                seg("必", "かなら", True),
-                seg("ずカードをこのふくろに", red=True),
+                seg("※"),
+                seg("使用後", "しようご"),
+                seg("は"),
+                seg("必", "かなら"),
+                seg("ずカードをこのふくろに"),
             ),
-            (seg("もどしてください。", red=True),),
+            (seg("もどしてください。"),),
         ),
         8.6,
         center=False,
@@ -161,15 +159,15 @@ BLOCKS: dict[str, Block] = {
     "case_notice": Block(
         (
             (
-                seg("※カードは", red=True),
-                seg("必", "かなら", True),
-                seg("ず", red=True),
-                seg("保護", "ほご", True),
-                seg("ジャケットに", red=True),
-                seg("入", "い", True),
-                seg("れてから", red=True),
+                seg("※カードは"),
+                seg("必", "かなら"),
+                seg("ず"),
+                seg("保護", "ほご"),
+                seg("ジャケットに"),
+                seg("入", "い"),
+                seg("れてから"),
             ),
-            (seg("しまってください。", red=True),),
+            (seg("しまってください。"),),
         ),
         8.6,
         center=False,
@@ -659,19 +657,14 @@ def case_square(glue_w: float) -> Item:
     return Item(outline, creases, art, ((glue_w / 2, h / 2),), zones, slits)
 
 
-def resolve(color: tuple[float, ...], mono: bool) -> tuple[float, ...]:
-    return BLACK if mono and color == RED else color
-
-
 def line_width(line: tuple[Segment, ...], size: float) -> float:
-    return sum(FONTS[JAPANESE].text_length(text, size) for text, _, _ in line)
+    return sum(FONTS[JAPANESE].text_length(text, size) for text, _ in line)
 
 
 def block_page(
     doc: pymupdf.Document,
     block: Block,
-    mono: bool,
-    ink: tuple[float, ...] | None = None,
+    ink: tuple[float, ...] = BLACK,
 ) -> pymupdf.Rect:
     pad = 3 * MM if block.boxed else 0.6 * MM
     ruby = block.size * RUBY_SCALE
@@ -685,11 +678,10 @@ def block_page(
     for index, line in enumerate(block.lines):
         x = pad + ((widest - line_width(line, block.size)) / 2 if block.center else 0)
         baseline = pad + index * pitch + ruby + block.size * 0.95
-        for text, reading, red in line:
-            color = ink or resolve(RED if red else BLACK, mono)
+        for text, reading in line:
             width = FONTS[JAPANESE].text_length(text, block.size)
             page.insert_text(
-                (x, baseline), text, fontsize=block.size, fontname=JAPANESE, color=color
+                (x, baseline), text, fontsize=block.size, fontname=JAPANESE, color=ink
             )
             if reading:
                 rx = x + (width - FONTS[JAPANESE].text_length(reading, ruby)) / 2
@@ -698,7 +690,7 @@ def block_page(
                     reading,
                     fontsize=ruby,
                     fontname=JAPANESE,
-                    color=color,
+                    color=ink,
                 )
             x += width
     if block.boxed:
@@ -733,7 +725,7 @@ def drop_text(doc: pymupdf.Document) -> None:
             doc.xref_set_key(res_xref, f"{prefix}Font", "null")
 
 
-def plain_cmyk(doc: pymupdf.Document, mono: bool) -> None:
+def black_only(doc: pymupdf.Document) -> None:
     drop_text(doc)
     for xref in range(1, doc.xref_length()):
         if doc.xref_is_stream(xref) and b"/CS9" in (
@@ -742,17 +734,17 @@ def plain_cmyk(doc: pymupdf.Document, mono: bool) -> None:
             stream = re.sub(rb"/CS9 (cs|CS)", rb"/DeviceCMYK \1", stream)
             doc.update_stream(
                 xref,
-                re.sub(CMYK_OPERATOR_PATTERN, to_black_ink, stream) if mono else stream,
+                re.sub(CMYK_OPERATOR_PATTERN, to_black_ink, stream),
             )
         if doc.xref_get_key(xref, "DefaultCMYK")[0] != "null":
             doc.xref_set_key(xref, "DefaultCMYK", "null")
 
 
 def art_source(
-    template: Path, mono: bool
+    template: Path,
 ) -> tuple[pymupdf.Document, dict[str, tuple[int, pymupdf.Rect]]]:
     doc = pymupdf.open(template)
-    plain_cmyk(doc, mono)
+    black_only(doc)
     keep = doc.page_count
     dx, dy = _template_offset(doc[0])
     pages = {
@@ -770,10 +762,10 @@ def art_source(
         for name, r in TEMPLATE_CLIPS_MM.items()
     }
     for name, block in BLOCKS.items():
-        pages[name] = (doc.page_count, block_page(doc, block, mono))
+        pages[name] = (doc.page_count, block_page(doc, block))
     pages["glue_gray"] = (
         doc.page_count,
-        block_page(doc, BLOCKS["glue"], mono, LINE_GRAY),
+        block_page(doc, BLOCKS["glue"], LINE_GRAY),
     )
     if keep != 1:
         raise ValueError("the artwork source must be a one-page sheet")
@@ -936,16 +928,15 @@ def trim_union(sheet: list[tuple[Item, Placement]]) -> pymupdf.Rect:
 def render(
     sheet: list[tuple[Item, Placement]],
     page_mm: Point,
-    mono: bool,
     template: Path,
     out: Path,
 ) -> None:
-    source, pages = art_source(template, mono)
+    source, pages = art_source(template)
     doc = pymupdf.open()
     page = doc.new_page(width=page_mm[0] * MM, height=page_mm[1] * MM)
     page.insert_font(fontname=LATIN, fontbuffer=FONTS[LATIN].buffer)
     layers = {"art": doc.add_ocg("Art", on=True)}
-    ctx = Context(page, source, pages, layers, mono)
+    ctx = Context(page, source, pages, layers)
     for item, place in sheet:
         draw_item(ctx, item, place)
     union = trim_union(sheet)
@@ -1110,14 +1101,6 @@ def main(template: str, out_dir: str, which: str) -> None:
         render(
             sheet,
             page_mm,
-            False,
-            Path(template),
-            folder / f"FDS-{key}_HomePrint-Color_{version}.pdf",
-        )
-        render(
-            sheet,
-            page_mm,
-            True,
             Path(template),
             folder / f"FDS-{key}_HomePrint-Mono_{version}.pdf",
         )
