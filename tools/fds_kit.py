@@ -33,7 +33,7 @@ ITEM_FOLDERS = {
     "Disk-Case": "case",
     "Disk-Cover": "cover",
 }
-WIDE_GLUE = {"jacket": 15.0, "envelope": 15.0, "case": 18.0}
+WIDE_GLUE = {"jacket": 15.0, "case": 18.0}
 STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5, "case": 12.0}
 ENVELOPE_NEST_GAP_MM = 4.0
 NEST_GAP_MM = 6.0
@@ -1021,15 +1021,8 @@ def standard_glue_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Poin
 
 
 def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
-    jk, env, cs, cv = (
-        jacket(WIDE_GLUE["jacket"]),
-        envelope(WIDE_GLUE["envelope"]),
-        case(WIDE_GLUE["case"]),
-        cover(),
-    )
-    jk_box, env_box, cs_box, cv_box = (
-        polygon_bbox(i.outline) for i in (jk, env, cs, cv)
-    )
+    jk, cs, cv = jacket(WIDE_GLUE["jacket"]), case(WIDE_GLUE["case"]), cover()
+    jk_box, cs_box, cv_box = (polygon_bbox(i.outline) for i in (jk, cs, cv))
     pitch = nesting_pitch(jk.outline)
     jk_height = 2 * pitch + jk_box[3] - jk_box[1]
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
@@ -1040,10 +1033,6 @@ def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
                 (jk, Placement((jk_x, jk_y + i * pitch), False, jk_box))
                 for i in range(3)
             ],
-            A4,
-        ),
-        "Disk-Envelope_A4_1up": (
-            [(env, Placement(centered(env_box, A4), False, env_box))],
             A4,
         ),
         "Disk-Case_A4-landscape_1up": (
@@ -1064,19 +1053,20 @@ def square_sheets(
     glue: dict[str, float], two_up_envelope: bool
 ) -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
     tag = "Square_StdGlue" if two_up_envelope else "Square"
-    jk, env, cs = (
-        jacket_square(glue["jacket"]),
-        envelope_square(glue["envelope"]),
-        case_square(glue["case"]),
-    )
-    jk_box, env_box, cs_box = (polygon_bbox(i.outline) for i in (jk, env, cs))
+    jk, cs = jacket_square(glue["jacket"]), case_square(glue["case"])
+    jk_box, cs_box = polygon_bbox(jk.outline), polygon_bbox(cs.outline)
     pitch = nesting_pitch(jk.outline)
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
     jk_y = (A4[1] - (2 * pitch + jk_box[3] - jk_box[1]) - 10) / 2
     envelopes = (
-        envelope_two_up(env)
+        {
+            f"Disk-Envelope_A4_2up_{tag}": (
+                envelope_two_up(envelope_square(glue["envelope"])),
+                A4,
+            )
+        }
         if two_up_envelope
-        else [(env, Placement(centered(env_box, A4), False, env_box))]
+        else {}
     )
     return {
         f"Card-Jacket_A4_3up_{tag}": (
@@ -1086,7 +1076,7 @@ def square_sheets(
             ],
             A4,
         ),
-        f"Disk-Envelope_A4_{2 if two_up_envelope else 1}up_{tag}": (envelopes, A4),
+        **envelopes,
         f"Disk-Case_A4-landscape_1up_{tag}": (
             [(cs, Placement(centered(cs_box, A4_LANDSCAPE), False, cs_box))],
             A4_LANDSCAPE,

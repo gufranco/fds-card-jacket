@@ -13,7 +13,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item.
 | Item | Folder | Holds |
 |:-----|:-------|:------|
 | Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card |
-| Envelope | [`sheets/envelope/`](sheets/envelope/) | A kraft-style pouch with a long tuck flap |
+| Envelope | [`sheets/envelope/`](sheets/envelope/) | Two kraft-style pouches per sheet with a long tuck flap, in the `StdGlue` sheets only |
 | Case | [`sheets/case/`](sheets/case/) | A cardstock box with tuck ends |
 | Cover | [`sheets/cover/`](sheets/cover/) | Three obi strips per sheet that wrap the case |
 
@@ -24,7 +24,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item.
 | `HomePrint-Color` | You print at home in color |
 | `HomePrint-Mono` | You print at home with black ink only |
 | `Square` | You cut with scissors and round the corners with a corner punch; every cut is horizontal or vertical |
-| `StdGlue` | You prefer smaller glue flaps; the envelope then fits two per sheet |
+| `StdGlue` | You prefer smaller glue flaps; the envelope comes only in this variant |
 
 Sheets without `Square` are drawn for a ruler and a craft knife.
 
