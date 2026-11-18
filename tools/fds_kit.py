@@ -24,16 +24,16 @@ RELIEF_MM = 1.0
 GLUE_TINT = (0, 0, 0, 0.08)
 ZONE_MARGIN_MM = 1.0
 SQUARE_RELIEF_MM = 2.0
-SQUARE_ENVELOPE_NOTCH_MM = (16.0, 6.0)
 SQUARE_JACKET_NOTCH_INSET_MM = 11.0
+ENVELOPE_GLUE_MM = 25.0
+ENVELOPE_FLAP_OFFSET_MM = 10.0
 ITEM_FOLDERS = {
     "Card-Jacket": "card-jacket",
     "Disk-Envelope": "envelope",
     "Disk-Cover": "cover",
 }
 WIDE_GLUE = {"jacket": 15.0}
-STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5}
-ENVELOPE_NEST_GAP_MM = 4.0
+STANDARD_GLUE = {"jacket": 11.5}
 NEST_GAP_MM = 6.0
 COVER_GAP_MM = (4.0, 0.0)
 COLUMN_MM = 0.25
@@ -259,75 +259,90 @@ def jacket(glue: float) -> Item:
     return Item(outline, creases, art, glue_points, zones)
 
 
-def envelope(glue: float) -> Item:
-    w, h, tuck, notch = 80.0, 95.0, 35.0, 8.0
-    flap = GUSSET + glue
-    taper, inset, end, r = 6.5, 2.0, 8.0, RELIEF_MM
-    f0 = tuck + h + GUSSET
-    f1 = f0 + h
-    outline: Polygon = (
-        (0, tuck),
-        (inset, tuck),
-        (inset + taper, 0),
-        (w - inset - taper, 0),
-        (w - inset, tuck),
-        (w, tuck),
-        (w, f0),
-        (w, f0 + r),
-        (w + flap, f0 + r + end),
-        (w + flap, f1 - r - end),
-        (w, f1 - r),
-        (w, f1),
-        (w / 2 + notch, f1),
-        (w / 2, f1 - 6),
-        (w / 2 - notch, f1),
-        (0, f1),
-        (0, f1 - r),
-        (-flap, f1 - r - end),
-        (-flap, f0 + r + end),
-        (0, f0 + r),
-        (0, f0),
+@dataclass(frozen=True)
+class EnvelopeFrame:
+    width: float
+    tuck: float
+    bottom: float
+    opening: float
+    shoulder: float
+    flap: float
+
+
+def envelope_frame() -> EnvelopeFrame:
+    w, h, tip = 80.0, 95.0, 31.0
+    tuck = tip + GUSSET
+    bottom = tuck + h + GUSSET
+    return EnvelopeFrame(
+        width=w,
+        tuck=tuck,
+        bottom=bottom,
+        opening=bottom + h,
+        shoulder=bottom + ENVELOPE_FLAP_OFFSET_MM,
+        flap=GUSSET + ENVELOPE_GLUE_MM,
     )
-    creases = (
-        horizontal(outline, tuck, inset, w - inset),
-        horizontal(outline, tuck - GUSSET, 0, w),
-        ((0, tuck + h), (w, tuck + h)),
-        ((0, f0), (w, f0)),
-        ((0, f0 + r), (0, f1 - r)),
-        ((w, f0 + r), (w, f1 - r)),
-        vertical(outline, -GUSSET),
-        vertical(outline, w + GUSSET),
+
+
+def envelope_outline(f: EnvelopeFrame) -> Polygon:
+    return (
+        (0, 0),
+        (f.width, 0),
+        (f.width, f.shoulder),
+        (f.width + f.flap, f.shoulder),
+        (f.width + f.flap, f.opening),
+        (-f.flap, f.opening),
+        (-f.flap, f.shoulder),
+        (0, f.shoulder),
     )
-    m = ZONE_MARGIN_MM
-    zone_top, zone_bottom = f0 + r + end + m, f1 - r - end - m
+
+
+def envelope_creases(f: EnvelopeFrame) -> tuple[tuple[Point, Point], ...]:
+    rows = (f.tuck - GUSSET, f.tuck, f.bottom - GUSSET, f.bottom)
+    columns = (-GUSSET, 0.0, f.width, f.width + GUSSET)
+    return (
+        *(((0.0, y), (f.width, y)) for y in rows),
+        *(((x, f.shoulder), (x, f.opening)) for x in columns),
+    )
+
+
+def envelope_guides(f: EnvelopeFrame) -> tuple[tuple[Point, Point], ...]:
+    side = tuple(
+        guide
+        for y in (f.tuck - GUSSET / 2, f.bottom - GUSSET / 2)
+        for guide in (
+            ((0.0, y), (NOTCH_GUIDE_MM, y)),
+            ((f.width, y), (f.width - NOTCH_GUIDE_MM, y)),
+        )
+    )
+    opening = tuple(
+        ((x, f.opening), (x, f.opening - NOTCH_GUIDE_MM))
+        for x in (-GUSSET / 2, f.width + GUSSET / 2)
+    )
+    return side + opening
+
+
+def envelope() -> Item:
+    f = envelope_frame()
+    m, w = ZONE_MARGIN_MM, f.width
     zones = (
-        (
-            (-flap + m, zone_top),
-            (-GUSSET - m, zone_top),
-            (-GUSSET - m, zone_bottom),
-            (-flap + m, zone_bottom),
-        ),
-        (
-            (w + GUSSET + m, zone_top),
-            (w + flap - m, zone_top),
-            (w + flap - m, zone_bottom),
-            (w + GUSSET + m, zone_bottom),
-        ),
+        rectangle(-f.flap + m, f.shoulder + m, -GUSSET - m, f.opening - m),
+        rectangle(w + GUSSET + m, f.shoulder + m, w + f.flap - m, f.opening - m),
     )
     art = (
-        Clip("envelope_title", (w / 2, f1 - 30), 180),
-        Clip("envelope_notice", (w / 2, f1 - 52), 180),
-        Clip("logo", (w / 2, f0 + 12), 180),
-        Clip("warning", (w / 2, tuck + 30)),
-        Clip("envelope_flap", (w / 2, tuck + 70)),
+        Clip("envelope_title", (w / 2, f.opening - 30), 180),
+        Clip("envelope_notice", (w / 2, f.opening - 52), 180),
+        Clip("logo", (w / 2, f.bottom + 12), 180),
+        Clip("warning", (w / 2, f.tuck + 30)),
+        Clip("envelope_flap", (w / 2, f.tuck + 70)),
     )
-    glue_x = GUSSET + glue / 2
+    glue_x, glue_y = GUSSET + ENVELOPE_GLUE_MM / 2, (f.shoulder + f.opening) / 2
     return Item(
-        outline,
-        creases,
+        envelope_outline(f),
+        envelope_creases(f),
         art,
-        ((-glue_x, (f0 + f1) / 2), (w + glue_x, (f0 + f1) / 2)),
+        ((-glue_x, glue_y), (w + glue_x, glue_y)),
         zones,
+        envelope_guides(f),
     )
 
 
@@ -399,66 +414,6 @@ def jacket_square(glue: float) -> Item:
         ((fold_a + fold_b) / 2, (flap_top + top - GUSSET) / 2),
     )
     return Item(outline, creases, art, glue_points, zones)
-
-
-def envelope_square(glue: float) -> Item:
-    w, h, tuck, inset = 80.0, 95.0, 35.0, 2.0
-    notch_w, notch_d = SQUARE_ENVELOPE_NOTCH_MM
-    flap, end = GUSSET + glue, GUSSET
-    f0 = tuck + h + GUSSET
-    f1 = f0 + h
-    outline: Polygon = (
-        (0, tuck),
-        (inset, tuck),
-        (inset, 0),
-        (w - inset, 0),
-        (w - inset, tuck),
-        (w, tuck),
-        (w, f0 + end),
-        (w + flap, f0 + end),
-        (w + flap, f1 - end),
-        (w, f1 - end),
-        (w, f1),
-        ((w + notch_w) / 2, f1),
-        ((w + notch_w) / 2, f1 - notch_d),
-        ((w - notch_w) / 2, f1 - notch_d),
-        ((w - notch_w) / 2, f1),
-        (0, f1),
-        (0, f1 - end),
-        (-flap, f1 - end),
-        (-flap, f0 + end),
-        (0, f0 + end),
-    )
-    creases = (
-        ((inset, tuck), (w - inset, tuck)),
-        ((inset, tuck - GUSSET), (w - inset, tuck - GUSSET)),
-        ((0, tuck + h), (w, tuck + h)),
-        ((0, f0), (w, f0)),
-        ((0, f0 + end), (0, f1 - end)),
-        ((w, f0 + end), (w, f1 - end)),
-        ((-GUSSET, f0 + end), (-GUSSET, f1 - end)),
-        ((w + GUSSET, f0 + end), (w + GUSSET, f1 - end)),
-    )
-    m = ZONE_MARGIN_MM
-    zones = (
-        rectangle(-flap + m, f0 + end + m, -GUSSET - m, f1 - end - m),
-        rectangle(w + GUSSET + m, f0 + end + m, w + flap - m, f1 - end - m),
-    )
-    art = (
-        Clip("envelope_title", (w / 2, f1 - 30), 180),
-        Clip("envelope_notice", (w / 2, f1 - 52), 180),
-        Clip("logo", (w / 2, f0 + 12), 180),
-        Clip("warning", (w / 2, tuck + 30)),
-        Clip("envelope_flap", (w / 2, tuck + 70)),
-    )
-    glue_x = GUSSET + glue / 2
-    return Item(
-        outline,
-        creases,
-        art,
-        ((-glue_x, (f0 + f1) / 2), (w + glue_x, (f0 + f1) / 2)),
-        zones,
-    )
 
 
 def line_width(line: tuple[Segment, ...], size: float) -> float:
@@ -766,19 +721,6 @@ def nesting_pitch(outline: Polygon) -> float:
     return max(spans) + NEST_GAP_MM
 
 
-def envelope_two_up(env: Item) -> list[tuple[Item, Placement]]:
-    box = polygon_bbox(env.outline)
-    flap = -box[0]
-    step = (box[2] - box[0]) - flap + ENVELOPE_NEST_GAP_MM
-    rise = 35.0
-    x0 = (A4[0] - (box[2] - box[0] + step)) / 2
-    y0 = (A4[1] - (box[3] - box[1] + rise) - 10) / 2
-    return [
-        (env, Placement((x0, y0), False, box)),
-        (env, Placement((x0 + step, y0 + rise), True, box)),
-    ]
-
-
 def standard_glue_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
     jk = jacket(STANDARD_GLUE["jacket"])
     jk_box = polygon_bbox(jk.outline)
@@ -791,10 +733,6 @@ def standard_glue_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Poin
                 (jk, Placement((jk_x, jk_y + i * pitch), False, jk_box))
                 for i in range(3)
             ],
-            A4,
-        ),
-        "Disk-Envelope_A4_2up_StdGlue": (
-            envelope_two_up(envelope(STANDARD_GLUE["envelope"])),
             A4,
         ),
     }
@@ -826,24 +764,14 @@ def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
 
 
 def square_sheets(
-    glue: dict[str, float], two_up_envelope: bool
+    glue: dict[str, float], standard_glue: bool
 ) -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
-    tag = "Square_StdGlue" if two_up_envelope else "Square"
+    tag = "Square_StdGlue" if standard_glue else "Square"
     jk = jacket_square(glue["jacket"])
     jk_box = polygon_bbox(jk.outline)
     pitch = nesting_pitch(jk.outline)
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
     jk_y = (A4[1] - (2 * pitch + jk_box[3] - jk_box[1]) - 10) / 2
-    envelopes = (
-        {
-            f"Disk-Envelope_A4_2up_{tag}": (
-                envelope_two_up(envelope_square(glue["envelope"])),
-                A4,
-            )
-        }
-        if two_up_envelope
-        else {}
-    )
     return {
         f"Card-Jacket_A4_3up_{tag}": (
             [
@@ -852,8 +780,17 @@ def square_sheets(
             ],
             A4,
         ),
-        **envelopes,
     }
+
+
+def envelope_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
+    env = envelope()
+    box = polygon_bbox(env.outline)
+    offset = (
+        (A4[0] - (box[2] - box[0])) / 2,
+        (A4[1] - (box[3] - box[1]) - 10) / 2,
+    )
+    return {"Disk-Envelope_A4_1up": ([(env, Placement(offset, False, box))], A4)}
 
 
 SheetSet = dict[str, tuple[list[tuple[Item, Placement]], Point]]
@@ -865,6 +802,8 @@ def sheet_sets(which: str) -> tuple[SheetSet, str]:
     if which in ("square", "square-standard"):
         glue = STANDARD_GLUE if which == "square-standard" else WIDE_GLUE
         return square_sheets(glue, which == "square-standard"), "v5"
+    if which == "envelope":
+        return envelope_sheets(), "v6"
     return sheets(), "v4"
 
 

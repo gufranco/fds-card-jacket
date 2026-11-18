@@ -13,7 +13,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 | Item | Folder | Holds |
 |:-----|:-------|:------|
 | Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card |
-| Envelope | [`sheets/envelope/`](sheets/envelope/) | Two kraft-style pouches per sheet with a long tuck flap, in the `StdGlue` sheets only |
+| Envelope | [`sheets/envelope/`](sheets/envelope/) | One kraft-style pouch per sheet with a tuck flap and 25 mm glue flaps; every cut is horizontal or vertical |
 | Cover | [`sheets/cover/`](sheets/cover/) | Three folded obi strips per sheet |
 
 ## Which file to print
@@ -21,7 +21,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 | Name contains | Use it when |
 |:--------------|:------------|
 | `Square` | You cut with scissors and round the corners with a corner punch; every cut is horizontal or vertical |
-| `StdGlue` | You prefer smaller glue flaps; the envelope comes only in this variant |
+| `StdGlue` | You prefer smaller glue flaps on the card jacket |
 
 Sheets without `Square` are drawn for a ruler and a craft knife.
 
@@ -60,6 +60,7 @@ uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sh
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets standard
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square-standard
+uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets envelope
 ```
 
 Each command writes into the item folders under [`sheets/`](sheets/).

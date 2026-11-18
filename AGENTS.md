@@ -22,6 +22,7 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 | Sheet | Rounded corners | Notches |
 |:------|:----------------|:--------|
 | Cover | All four corners of each cover | Both side edges at the spine, one notch spanning its two fold lines |
+| Envelope | The two tuck flap corners and the four glue flap corners | Both side edges at the top fold and at the bottom fold, and the opening edge at each side wall; each notch spans its two fold lines |
 
 ## Hard rules
 
@@ -29,6 +30,7 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 
 - Every outer corner of every piece is rounded with the finishing punch.
 - Every place where a fold line meets a cut edge gets a notch made with the finishing punch.
+- A fold that ends at an inside corner gets no notch and no guide: the punch cannot seat there, and the cut already frees the fold.
 - Every notch site carries a guide mark centered on the notch, for lining up the punch. The mark is very subtle and hard to see, so it never shows on the finished piece: a 1 mm tick at 20 percent black and 0.2 pt, lighter and thinner than the fold lines, running from the cut edge into the area the notch removes. The values are `NOTCH_GUIDE_MM`, `NOTCH_GUIDE_GRAY` and `NOTCH_GUIDE_WIDTH` in the generator. On the cover it sits at the middle of the spine on each side edge.
 - The corner radius and notch size are unknown. Measure a punched sample and record both in the table above before a sheet depends on either value.
 - Cut and fold lines are straight: no curves. [`tools/check_curves.py`](tools/check_curves.py) checks it. The only curves on a finished piece come from the finishing punch.
@@ -46,7 +48,8 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 - Every sheet is `HomePrint-Mono`: black ink only, no color sheets and nothing for a print shop.
 - Paper only: no manual, booklet or 3D-printed parts.
 - Sheets are A4 and print at 100 percent.
-- Glue flaps are large by default. `StdGlue` sheets use the smaller widths, and the envelope ships only as the 2-up `StdGlue` and `Square_StdGlue` sheets.
+- Glue flaps are large by default, and `StdGlue` card jackets use the smaller widths.
+- The envelope is one 1-up sheet: only right angles, no steps, a full-width tuck flap and 25 mm glue flaps. The glue flaps start 10 mm below the bottom fold, so the punch has room to notch that fold, and end flush with the opening, so the opening is one straight cut.
 - The three covers on the cover sheet sit 4 mm apart, so each has its own cut outline.
 - A new variant is a new file. An existing sheet changes only when the owner names it.
 - Regenerating every mode stays pixel-identical to the committed sheets. Run [`tools/compare_renders.py`](tools/compare_renders.py) in both directions, because it reports only sheets missing from its second argument.
