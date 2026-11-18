@@ -21,8 +21,6 @@ CARD_THICKNESS_MM = 3.0
 TOLERANCE_MM = 1.0
 GUSSET = CARD_THICKNESS_MM + TOLERANCE_MM
 RELIEF_MM = 1.0
-GLUE_TINT = (0, 0, 0, 0.08)
-ZONE_MARGIN_MM = 1.0
 SQUARE_RELIEF_MM = 2.0
 SQUARE_JACKET_NOTCH_INSET_MM = 11.0
 ENVELOPE_GLUE_MM = 25.0
@@ -89,8 +87,6 @@ class Item:
     outline: Polygon
     creases: tuple[tuple[Point, Point], ...]
     art: tuple[Element, ...]
-    glue: tuple[Point, ...] = field(default_factory=tuple)
-    zones: tuple[Polygon, ...] = field(default_factory=tuple)
     notch_guides: tuple[tuple[Point, Point], ...] = field(default_factory=tuple)
 
 
@@ -152,7 +148,6 @@ BLOCKS: dict[str, Block] = {
     ),
     "cover_title": Block(((seg("ディスクカード"),),), 15, boxed=True),
     "cover_name": Block(((seg("ソフト"), seg("名", "めい")),), 7.5, center=False),
-    "glue": Block(((seg("のりしろ"),),), 5.0),
 }
 
 
@@ -236,27 +231,8 @@ def jacket(glue: float) -> Item:
         vertical(outline, fold_b + GUSSET),
         horizontal(outline, top - GUSSET, fold_a, fold_b),
     )
-    m = ZONE_MARGIN_MM
-    zones = (
-        (
-            (fold_b + GUSSET + m, top + r + 7),
-            (right - m, top + r + 7),
-            (right - m, bottom - 8),
-            (fold_b + GUSSET + m, bottom - 8),
-        ),
-        (
-            (fold_a + 10.5, flap_top + m),
-            (fold_b - 10.5, flap_top + m),
-            (fold_b - 10.5, top - GUSSET - m),
-            (fold_a + 10.5, top - GUSSET - m),
-        ),
-    )
     art = (Clip("jacket_front", (47.5, 54.75)), Clip("warning", (129.0, 47.4)))
-    glue_points = (
-        (fold_b + GUSSET + glue / 2, (top + bottom) / 2),
-        ((fold_a + fold_b) / 2, (flap_top + top - GUSSET) / 2),
-    )
-    return Item(outline, creases, art, glue_points, zones)
+    return Item(outline, creases, art)
 
 
 @dataclass(frozen=True)
@@ -323,11 +299,7 @@ def envelope_guides(f: EnvelopeFrame) -> tuple[tuple[Point, Point], ...]:
 
 def envelope() -> Item:
     f = envelope_frame()
-    m, w = ZONE_MARGIN_MM, f.width
-    zones = (
-        rectangle(-f.flap + m, f.shoulder + m, -GUSSET - m, f.opening - m),
-        rectangle(w + GUSSET + m, f.shoulder + m, w + f.flap - m, f.opening - m),
-    )
+    w = f.width
     art = (
         Clip("envelope_title", (w / 2, f.opening - 30), 180),
         Clip("envelope_notice", (w / 2, f.opening - 52), 180),
@@ -335,13 +307,10 @@ def envelope() -> Item:
         Clip("warning", (w / 2, f.tuck + 30)),
         Clip("envelope_flap", (w / 2, f.tuck + 70)),
     )
-    glue_x, glue_y = GUSSET + ENVELOPE_GLUE_MM / 2, (f.shoulder + f.opening) / 2
     return Item(
         envelope_outline(f),
         envelope_creases(f),
         art,
-        ((-glue_x, glue_y), (w + glue_x, glue_y)),
-        zones,
         envelope_guides(f),
     )
 
@@ -361,10 +330,6 @@ def cover() -> Item:
     mid = front + spine_h / 2
     guides = (((0, mid), (NOTCH_GUIDE_MM, mid)), ((w, mid), (w - NOTCH_GUIDE_MM, mid)))
     return Item(outline, creases, art, notch_guides=guides)
-
-
-def rectangle(x0: float, y0: float, x1: float, y1: float) -> Polygon:
-    return ((x0, y0), (x1, y0), (x1, y1), (x0, y1))
 
 
 def jacket_square(glue: float) -> Item:
@@ -401,30 +366,15 @@ def jacket_square(glue: float) -> Item:
         ((fold_b + GUSSET, top + r), (fold_b + GUSSET, side_y)),
         ((fold_a + inset, top - GUSSET), (fold_b - inset, top - GUSSET)),
     )
-    m = ZONE_MARGIN_MM
-    zones = (
-        rectangle(fold_b + GUSSET + m, top + r + m, right - m, side_y - m),
-        rectangle(
-            fold_a + inset + m, flap_top + m, fold_b - inset - m, top - GUSSET - m
-        ),
-    )
     art = (Clip("jacket_front", (47.5, 54.75)), Clip("warning", (129.0, 47.4)))
-    glue_points = (
-        (fold_b + GUSSET + glue / 2, (top + r + side_y) / 2),
-        ((fold_a + fold_b) / 2, (flap_top + top - GUSSET) / 2),
-    )
-    return Item(outline, creases, art, glue_points, zones)
+    return Item(outline, creases, art)
 
 
 def line_width(line: tuple[Segment, ...], size: float) -> float:
     return sum(FONTS[JAPANESE].text_length(text, size) for text, _ in line)
 
 
-def block_page(
-    doc: pymupdf.Document,
-    block: Block,
-    ink: tuple[float, ...] = BLACK,
-) -> pymupdf.Rect:
+def block_page(doc: pymupdf.Document, block: Block) -> pymupdf.Rect:
     pad = 3 * MM if block.boxed else 0.6 * MM
     ruby = block.size * RUBY_SCALE
     pitch = block.size * 1.25 + ruby
@@ -440,7 +390,7 @@ def block_page(
         for text, reading in line:
             width = FONTS[JAPANESE].text_length(text, block.size)
             page.insert_text(
-                (x, baseline), text, fontsize=block.size, fontname=JAPANESE, color=ink
+                (x, baseline), text, fontsize=block.size, fontname=JAPANESE, color=BLACK
             )
             if reading:
                 rx = x + (width - FONTS[JAPANESE].text_length(reading, ruby)) / 2
@@ -449,7 +399,7 @@ def block_page(
                     reading,
                     fontsize=ruby,
                     fontname=JAPANESE,
-                    color=ink,
+                    color=BLACK,
                 )
             x += width
     if block.boxed:
@@ -522,10 +472,6 @@ def art_source(
     }
     for name, block in BLOCKS.items():
         pages[name] = (doc.page_count, block_page(doc, block))
-    pages["glue_gray"] = (
-        doc.page_count,
-        block_page(doc, BLOCKS["glue"], LINE_GRAY),
-    )
     if keep != 1:
         raise ValueError("the artwork source must be a one-page sheet")
     return pymupdf.open("pdf", doc.tobytes()), pages
@@ -621,21 +567,9 @@ def draw_notch_guides(ctx: Context, item: Item, place: Placement) -> None:
     shape.commit()
 
 
-def draw_zones(ctx: Context, item: Item, place: Placement) -> None:
-    for zone in item.zones:
-        shape = polygon_shape(ctx.page, zone, place)
-        shape.finish(
-            color=None, fill=GLUE_TINT, width=0, closePath=True, oc=ctx.layers["art"]
-        )
-        shape.commit()
-
-
 def draw_item(ctx: Context, item: Item, place: Placement) -> None:
-    draw_zones(ctx, item, place)
     for element in item.art:
         draw_element(ctx, element, place)
-    for point in item.glue:
-        draw_clip(ctx, Clip("glue_gray", point, 90), place)
     draw_lines(ctx, item, place)
 
 
@@ -650,7 +584,7 @@ def draw_ruler(ctx: Context, origin: Point) -> None:
     shape.commit()
     ctx.page.insert_text(
         to_pt((x0 + 103, y0 + 3.5)),
-        "100 mm at 100%   cut: solid   fold: dashed, score first   glue: tint",
+        "100 mm at 100%   cut: solid   fold: dashed, score first",
         fontsize=7,
         fontname=LATIN,
         color=BLACK,

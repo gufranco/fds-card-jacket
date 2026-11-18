@@ -42,11 +42,10 @@ Sheets without `Square` are drawn for a ruler and a craft knife.
 |:-----|:--------|
 | Solid line | Cut |
 | Dashed line | Fold; score it first with the back of the knife against the ruler |
-| Gray tint, `のりしろ` | Glue |
 
 1. Cut every piece out.
 2. Score and fold every dashed line, and test the fit before any glue goes on.
-3. Glue the tinted flaps and press until the glue sets.
+3. Glue the side and top flaps of each card jacket and the two side flaps of the envelope, and press until the glue sets.
 4. On `Square` sheets, round the outer corners with the punch.
 
 The folds that wrap a disk leave 4 mm for its 3 mm thickness.

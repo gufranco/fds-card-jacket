@@ -49,6 +49,7 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 - Paper only: no manual, booklet or 3D-printed parts.
 - Sheets are A4 and print at 100 percent.
 - Glue flaps are large by default, and `StdGlue` card jackets use the smaller widths.
+- Glue areas are blank: no gray tint and no `のりしろ` label on any sheet, and the ruler legend names only cut and fold lines.
 - The envelope is one 1-up sheet: only right angles, no steps, a full-width tuck flap and 25 mm glue flaps. The glue flaps start 10 mm below the bottom fold, so the punch has room to notch that fold, and end flush with the opening, so the opening is one straight cut.
 - The three covers on the cover sheet sit 4 mm apart, so each has its own cut outline.
 - A new variant is a new file. An existing sheet changes only when the owner names it.
