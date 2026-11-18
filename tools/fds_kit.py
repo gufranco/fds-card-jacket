@@ -790,12 +790,14 @@ def art_source(
     pages = {
         name: (
             0,
-            pymupdf.Rect(*(
-                (r[0] + dx) * MM,
-                (r[1] + dy) * MM,
-                (r[2] + dx) * MM,
-                (r[3] + dy) * MM,
-            )),
+            pymupdf.Rect(
+                *(
+                    (r[0] + dx) * MM,
+                    (r[1] + dy) * MM,
+                    (r[2] + dx) * MM,
+                    (r[3] + dy) * MM,
+                )
+            ),
         )
         for name, r in TEMPLATE_CLIPS_MM.items()
     }
@@ -894,10 +896,12 @@ def draw_shape_element(ctx: Context, element: Line | Box, place: Placement) -> N
         shape.finish(color=BLACK, width=element.width, oc=ctx.layers["art"])
     else:
         a = place.apply(element.origin)
-        b = place.apply((
-            element.origin[0] + element.size[0],
-            element.origin[1] + element.size[1],
-        ))
+        b = place.apply(
+            (
+                element.origin[0] + element.size[0],
+                element.origin[1] + element.size[1],
+            )
+        )
         shape.draw_rect(pymupdf.Rect(to_pt(a), to_pt(b)).normalize())
         shape.finish(
             color=None,
