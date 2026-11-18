@@ -20,7 +20,6 @@ NOTCH_GUIDE_MM = 1.0
 CARD_THICKNESS_MM = 3.0
 TOLERANCE_MM = 1.0
 GUSSET = CARD_THICKNESS_MM + TOLERANCE_MM
-RELIEF_MM = 1.0
 SQUARE_RELIEF_MM = 2.0
 SQUARE_JACKET_NOTCH_INSET_MM = 11.0
 ENVELOPE_GLUE_MM = 25.0
@@ -170,69 +169,6 @@ def column(points: Polygon, x: float) -> list[float]:
         for a, b in edges(points)
         if a[0] != b[0] and min(a[0], b[0]) <= x <= max(a[0], b[0])
     ]
-
-
-def row(points: Polygon, y: float) -> list[float]:
-    return [
-        a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1])
-        for a, b in edges(points)
-        if a[1] != b[1] and min(a[1], b[1]) <= y <= max(a[1], b[1])
-    ]
-
-
-def vertical(
-    points: Polygon, x: float, top: float | None = None, bottom: float | None = None
-) -> tuple[Point, Point]:
-    ys = column(points, x)
-    return (x, top if top is not None else min(ys)), (
-        x,
-        bottom if bottom is not None else max(ys),
-    )
-
-
-def horizontal(
-    points: Polygon, y: float, left: float, right: float
-) -> tuple[Point, Point]:
-    xs = [x for x in row(points, y) if left - 0.01 <= x <= right + 0.01]
-    return (max(min(xs), left), y), (min(max(xs), right), y)
-
-
-def jacket(glue: float) -> Item:
-    left, fold_a, fold_b, top, bottom = 6.195, 86.195, 168.195, 21.985, 100.985
-    flap_top, notch_y, side_y = 6.485, 77.485, 89.485
-    right = fold_b + GUSSET + glue
-    r = RELIEF_MM
-    outline: Polygon = (
-        (left + 6, top),
-        (fold_a, top),
-        (fold_a + r, top),
-        (fold_a + 9.3, flap_top),
-        (fold_b - 9.3, flap_top),
-        (fold_b - r, top),
-        (fold_b, top),
-        (fold_b, top + r),
-        (right, top + r + 6),
-        (right, bottom - 7),
-        (fold_b + 6, bottom - 1),
-        (fold_b, side_y),
-        (fold_b - 22, notch_y),
-        (fold_a + 22, notch_y),
-        (fold_a, side_y),
-        (fold_a - 9, bottom),
-        (left + 6, bottom),
-        (left, bottom - 6),
-        (left, top + 6),
-    )
-    creases = (
-        vertical(outline, fold_a, top, side_y),
-        vertical(outline, fold_b, top + r, side_y),
-        ((fold_a + r, top), (fold_b - r, top)),
-        vertical(outline, fold_a - GUSSET),
-        vertical(outline, fold_b + GUSSET),
-        horizontal(outline, top - GUSSET, fold_a, fold_b),
-    )
-    art = (Clip("jacket_front", (47.5, 54.75)), Clip("warning", (129.0, 47.4)))
-    return Item(outline, creases, art)
 
 
 @dataclass(frozen=True)
@@ -655,38 +591,10 @@ def nesting_pitch(outline: Polygon) -> float:
     return max(spans) + NEST_GAP_MM
 
 
-def standard_glue_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
-    jk = jacket(STANDARD_GLUE["jacket"])
-    jk_box = polygon_bbox(jk.outline)
-    pitch = nesting_pitch(jk.outline)
-    jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
-    jk_y = (A4[1] - (2 * pitch + jk_box[3] - jk_box[1]) - 10) / 2
+def cover_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
+    cv = cover()
+    cv_box = polygon_bbox(cv.outline)
     return {
-        "Card-Jacket_A4_3up_StdGlue": (
-            [
-                (jk, Placement((jk_x, jk_y + i * pitch), False, jk_box))
-                for i in range(3)
-            ],
-            A4,
-        ),
-    }
-
-
-def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
-    jk, cv = jacket(WIDE_GLUE["jacket"]), cover()
-    jk_box, cv_box = polygon_bbox(jk.outline), polygon_bbox(cv.outline)
-    pitch = nesting_pitch(jk.outline)
-    jk_height = 2 * pitch + jk_box[3] - jk_box[1]
-    jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
-    jk_y = (A4[1] - jk_height - 10) / 2
-    return {
-        "Card-Jacket_A4_3up": (
-            [
-                (jk, Placement((jk_x, jk_y + i * pitch), False, jk_box))
-                for i in range(3)
-            ],
-            A4,
-        ),
         "Disk-Cover_A4-landscape_3up": (
             [
                 (cv, Placement(p, False, cv_box))
@@ -731,14 +639,16 @@ SheetSet = dict[str, tuple[list[tuple[Item, Placement]], Point]]
 
 
 def sheet_sets(which: str) -> tuple[SheetSet, str]:
-    if which == "standard":
-        return standard_glue_sheets(), "v4"
     if which in ("square", "square-standard"):
         glue = STANDARD_GLUE if which == "square-standard" else WIDE_GLUE
         return square_sheets(glue, which == "square-standard"), "v5"
     if which == "envelope":
         return envelope_sheets(), "v6"
-    return sheets(), "v4"
+    if which == "cover":
+        return cover_sheets(), "v4"
+    raise ValueError(
+        f"unknown mode {which!r}: use cover, square, square-standard or envelope"
+    )
 
 
 def item_folder(out_dir: str, key: str) -> Path:
@@ -761,4 +671,4 @@ def main(template: str, out_dir: str, which: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "wide")
+    main(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "cover")

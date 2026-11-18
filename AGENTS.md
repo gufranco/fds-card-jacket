@@ -36,7 +36,7 @@ The maker's image shows three uses: rounded corners on cards, a notch that shape
 - Cut and fold lines are straight: no curves. [`tools/check_curves.py`](tools/check_curves.py) checks it. The only curves on a finished piece come from the finishing punch.
 - Cut lines are as faint as fold lines, and fold dashes stay sparse.
 - A fold that wraps a disk leaves 4 mm: the 3 mm Quick Disk plus 1 mm tolerance.
-- `Square` sheets cut only horizontal and vertical lines. [`tools/check_square_layout.py`](tools/check_square_layout.py) checks it.
+- Every sheet cuts only horizontal and vertical lines; the card jackets ship only as `Square` sheets. [`tools/check_square_layout.py`](tools/check_square_layout.py) checks the jackets and the envelope.
 
 ### Artwork and text
 

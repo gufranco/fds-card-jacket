@@ -12,7 +12,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 
 | Item | Folder | Holds |
 |:-----|:-------|:------|
-| Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card |
+| Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card; every cut is horizontal or vertical |
 | Envelope | [`sheets/envelope/`](sheets/envelope/) | One kraft-style pouch per sheet with a tuck flap and 25 mm glue flaps; every cut is horizontal or vertical |
 | Cover | [`sheets/cover/`](sheets/cover/) | Three folded obi strips per sheet |
 
@@ -20,15 +20,14 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 
 | Name contains | Use it when |
 |:--------------|:------------|
-| `Square` | You cut with scissors and round the corners with a corner punch; every cut is horizontal or vertical |
-| `StdGlue` | You prefer smaller glue flaps on the card jacket |
-
-Sheets without `Square` are drawn for a ruler and a craft knife.
+| `Square` | You want the card jacket with large glue flaps |
+| `Square_StdGlue` | You prefer smaller glue flaps on the card jacket |
 
 ## What you need
 
 - An A4 printer and 120 to 180 g/m2 paper
-- A craft knife and a metal ruler, or scissors and an R4 or R5 corner punch for the `Square` sheets
+- Scissors, or a craft knife and a metal ruler
+- The Toke e Crie corner and notch punch, reference 17671, to round corners and notch fold ends
 - A glue stick or 6 to 12 mm double-sided tape
 
 ## Print
@@ -46,7 +45,7 @@ Sheets without `Square` are drawn for a ruler and a craft knife.
 1. Cut every piece out.
 2. Score and fold every dashed line, and test the fit before any glue goes on.
 3. Glue the side and top flaps of each card jacket and the two side flaps of the envelope, and press until the glue sets.
-4. On `Square` sheets, round the outer corners with the punch.
+4. Round every outer corner with the punch, and notch each fold end that has a faint tick at the cut edge.
 
 The folds that wrap a disk leave 4 mm for its 3 mm thickness.
 
@@ -55,8 +54,7 @@ The folds that wrap a disk leave 4 mm for its 3 mm thickness.
 The generator needs macOS, for the Hiragino Maru Gothic font, and [uv](https://docs.astral.sh/uv/). From the repository root:
 
 ```bash
-uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets wide
-uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets standard
+uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets cover
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets square-standard
 uv run python -I tools/fds_kit.py artwork/FDS-Card-Jacket_A4_3up_Color_v1.pdf sheets envelope
