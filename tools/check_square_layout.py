@@ -9,7 +9,7 @@ from shapely.geometry import LineString, Polygon
 MIN_MARGIN_MM = 5.0
 failures = 0
 for which in ("square", "square-standard"):
-    home, _, _ = k.sheet_sets(which)
+    home, _ = k.sheet_sets(which)
     for key, (sheet, page) in home.items():
         placed = [Polygon([p.apply(pt) for pt in item.outline]) for item, p in sheet]
         diagonal = sum(

@@ -24,7 +24,6 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item.
 |:--------------|:------------|
 | `HomePrint-Color` | You print at home in color |
 | `HomePrint-Mono` | You print at home with black ink only |
-| `CMYK-4x0_DieCut-Crease`, `CMYK-4x0_KissCut` | A print shop prints and die-cuts it; cut and crease lines are spot colors |
 | `Square` | You cut with scissors and round the corners with a corner punch; every cut is horizontal or vertical |
 | `StdGlue` | You prefer smaller glue flaps; the envelope then fits two per sheet |
 

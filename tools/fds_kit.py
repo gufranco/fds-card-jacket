@@ -12,14 +12,9 @@ BLACK = (0, 0, 0, 1)
 RED = (0, 1, 1, 0)
 WHITE = (0, 0, 0, 0)
 LINE_GRAY = (0, 0, 0, 0.38)
-CUT_PROXY = (0, 1, 0, 0)
-CREASE_PROXY = (1, 0, 0, 0)
 HOME_LINE_WIDTH = 0.3
 HOME_HALO_WIDTH = 1.2
 HOME_FOLD_DASHES = "[1.5 13.5] 0"
-SHOP_LINE_WIDTH = 0.25
-SHOP_CREASE_DASHES = "[4 2] 0"
-SHOP_BLEED_MM = 3.0
 CARD_THICKNESS_MM = 3.0
 TOLERANCE_MM = 1.0
 GUSSET = CARD_THICKNESS_MM + TOLERANCE_MM
@@ -43,6 +38,7 @@ WIDE_GLUE = {"jacket": 15.0, "envelope": 15.0, "case": 18.0}
 STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5, "case": 12.0}
 ENVELOPE_NEST_GAP_MM = 4.0
 NEST_GAP_MM = 6.0
+NO_GAP = (0.0, 0.0)
 COLUMN_MM = 0.25
 LATIN = "FB"
 JAPANESE = "HM"
@@ -55,9 +51,6 @@ TEMPLATE_CLIPS_MM = {
     "jacket_front": (13.5, 37.0, 81.5, 72.5),
 }
 CMYK_OPERATOR_PATTERN = rb"((?:[-\d.]+\s+){3}[-\d.]+)\s+(scn|SCN)\b"
-CUT_CS = "[/Separation /CutContour /DeviceCMYK << /FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [0 1 0 0] /N 1 >>]"
-CREASE_CS = "[/Separation /Crease /DeviceCMYK << /FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [1 0 0 0] /N 1 >>]"
-OVERPRINT_GS = "<< /Type /ExtGState /OP true /op true /OPM 1 >>"
 FONTS = {
     LATIN: pymupdf.Font("figbo"),
     JAPANESE: pymupdf.Font(fontfile=JAPANESE_FONT_FILE),
@@ -137,7 +130,6 @@ class Context:
     source: pymupdf.Document
     pages: dict[str, tuple[int, pymupdf.Rect]]
     layers: dict[str, int]
-    home: bool
     mono: bool
 
 
@@ -499,11 +491,11 @@ def cover() -> Item:
     return Item(outline, creases, art)
 
 
-def label(side: str, bleed: float) -> Item:
+def label(side: str) -> Item:
     w, h, block = 52.0, 22.0, 10.0
     outline: Polygon = ((0, 0), (w, 0), (w, h), (0, h))
     art = (
-        Box((-bleed, -bleed), (block + bleed, h + 2 * bleed), fill=RED),
+        Box((0, 0), (block, h), fill=RED),
         Text((block / 2, h / 2 - 3.0), side, 13, color=WHITE),
         Clip("label_side_white", (block / 2, h / 2 + 4.5)),
         Clip("logo", (w - 12.5, 5.0), scale=0.75),
@@ -858,14 +850,13 @@ def draw_slits(
     place: Placement,
     color: tuple[float, ...],
     width: float,
-    layer: str,
 ) -> None:
     if not item.slits:
         return
     shape = ctx.page.new_shape()
     for a, b in item.slits:
         shape.draw_line(to_pt(place.apply(a)), to_pt(place.apply(b)))
-    shape.finish(color=color, width=width, oc=ctx.layers[layer])
+    shape.finish(color=color, width=width, oc=ctx.layers["art"])
     shape.commit()
 
 
@@ -930,41 +921,25 @@ def draw_lines(ctx: Context, item: Item, place: Placement) -> None:
     crease = ctx.page.new_shape()
     for a, b in item.creases:
         crease.draw_line(to_pt(place.apply(a)), to_pt(place.apply(b)))
-    if ctx.home:
-        crease.finish(
-            color=LINE_GRAY,
-            width=HOME_LINE_WIDTH,
-            dashes=HOME_FOLD_DASHES,
-            oc=ctx.layers["art"],
-        )
-        halo = polygon_shape(ctx.page, item.outline, place)
-        halo.finish(
-            color=WHITE, width=HOME_HALO_WIDTH, closePath=True, oc=ctx.layers["art"]
-        )
-        halo.commit()
-        draw_slits(ctx, item, place, WHITE, HOME_HALO_WIDTH, "art")
-    else:
-        crease.finish(
-            color=CREASE_PROXY,
-            width=SHOP_LINE_WIDTH,
-            dashes=SHOP_CREASE_DASHES,
-            oc=ctx.layers["crease"],
-        )
+    crease.finish(
+        color=LINE_GRAY,
+        width=HOME_LINE_WIDTH,
+        dashes=HOME_FOLD_DASHES,
+        oc=ctx.layers["art"],
+    )
+    halo = polygon_shape(ctx.page, item.outline, place)
+    halo.finish(
+        color=WHITE, width=HOME_HALO_WIDTH, closePath=True, oc=ctx.layers["art"]
+    )
+    halo.commit()
+    draw_slits(ctx, item, place, WHITE, HOME_HALO_WIDTH)
     crease.commit()
     cut = polygon_shape(ctx.page, item.outline, place)
-    if ctx.home:
-        cut.finish(
-            color=LINE_GRAY, width=HOME_LINE_WIDTH, closePath=True, oc=ctx.layers["art"]
-        )
-    else:
-        cut.finish(
-            color=CUT_PROXY, width=SHOP_LINE_WIDTH, closePath=True, oc=ctx.layers["cut"]
-        )
+    cut.finish(
+        color=LINE_GRAY, width=HOME_LINE_WIDTH, closePath=True, oc=ctx.layers["art"]
+    )
     cut.commit()
-    if ctx.home:
-        draw_slits(ctx, item, place, LINE_GRAY, HOME_LINE_WIDTH, "art")
-    else:
-        draw_slits(ctx, item, place, CUT_PROXY, SHOP_LINE_WIDTH, "cut")
+    draw_slits(ctx, item, place, LINE_GRAY, HOME_LINE_WIDTH)
 
 
 def draw_zones(ctx: Context, item: Item, place: Placement) -> None:
@@ -977,13 +952,11 @@ def draw_zones(ctx: Context, item: Item, place: Placement) -> None:
 
 
 def draw_item(ctx: Context, item: Item, place: Placement) -> None:
-    if ctx.home:
-        draw_zones(ctx, item, place)
+    draw_zones(ctx, item, place)
     for element in item.art:
         draw_element(ctx, element, place)
-    if ctx.home:
-        for point in item.glue:
-            draw_clip(ctx, Clip("glue_gray", point, 90), place)
+    for point in item.glue:
+        draw_clip(ctx, Clip("glue_gray", point, 90), place)
     draw_lines(ctx, item, place)
 
 
@@ -1011,28 +984,6 @@ def follow(doc: pymupdf.Document, xref: int, path: str) -> tuple[int, str]:
     return (int(value.split()[0]), "") if kind == "xref" else (xref, f"{path}/")
 
 
-def set_resource(
-    doc: pymupdf.Document, page: pymupdf.Page, category: str, name: str, value: str
-) -> None:
-    res_xref, res_prefix = follow(doc, page.xref, "Resources")
-    cat_xref, cat_prefix = follow(doc, res_xref, f"{res_prefix}{category}")
-    doc.xref_set_key(cat_xref, f"{cat_prefix}{name}", value)
-
-
-def bind_spots(doc: pymupdf.Document, page: pymupdf.Page) -> None:
-    set_resource(doc, page, "ColorSpace", "CSCut", CUT_CS)
-    set_resource(doc, page, "ColorSpace", "CSCrease", CREASE_CS)
-    gs_xref = doc.get_new_xref()
-    doc.update_object(gs_xref, OVERPRINT_GS)
-    set_resource(doc, page, "ExtGState", "GSop", f"{gs_xref} 0 R")
-    for xref in page.get_contents():
-        stream = doc.xref_stream(xref)
-        stream = stream.replace(b"0 1 0 0 K", b"/GSop gs /CSCut CS 1 SCN").replace(
-            b"1 0 0 0 K", b"/GSop gs /CSCrease CS 1 SCN"
-        )
-        doc.update_stream(xref, stream)
-
-
 def trim_union(sheet: list[tuple[Item, Placement]]) -> pymupdf.Rect:
     rects = [
         pymupdf.Rect(
@@ -1050,41 +1001,20 @@ def trim_union(sheet: list[tuple[Item, Placement]]) -> pymupdf.Rect:
 def render(
     sheet: list[tuple[Item, Placement]],
     page_mm: Point,
-    mode: str,
+    mono: bool,
     template: Path,
     out: Path,
 ) -> None:
-    home, mono = mode != "shop", mode == "mono"
     source, pages = art_source(template, mono)
     doc = pymupdf.open()
     page = doc.new_page(width=page_mm[0] * MM, height=page_mm[1] * MM)
     page.insert_font(fontname=LATIN, fontbuffer=FONTS[LATIN].buffer)
-    names = ("Art", "CutContour - die cut, do not print", "Crease - fold, do not print")
-    layers = dict(
-        zip(
-            ("art", "cut", "crease"),
-            (doc.add_ocg(n, on=True) for n in names),
-            strict=True,
-        )
-    )
-    ctx = Context(page, source, pages, layers, home, mono)
+    layers = {"art": doc.add_ocg("Art", on=True)}
+    ctx = Context(page, source, pages, layers, mono)
     for item, place in sheet:
         draw_item(ctx, item, place)
     union = trim_union(sheet)
-    if home:
-        draw_ruler(ctx, (15, page_mm[1] - 12))
-    else:
-        bind_spots(doc, page)
-        page.set_bleedbox(
-            union
-            + (
-                -SHOP_BLEED_MM * MM,
-                -SHOP_BLEED_MM * MM,
-                SHOP_BLEED_MM * MM,
-                SHOP_BLEED_MM * MM,
-            )
-        )
-        page.set_trimbox(union)
+    draw_ruler(ctx, (15, page_mm[1] - 12))
     doc.set_metadata({"title": out.stem, "creator": "FDS paper kit"})
     doc.subset_fonts()
     doc.save(out, garbage=4, deflate=True)
@@ -1155,7 +1085,7 @@ def standard_glue_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Poin
     }
 
 
-def sheets(gang: bool) -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
+def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
     jk, env, cs, cv = (
         jacket(WIDE_GLUE["jacket"]),
         envelope(WIDE_GLUE["envelope"]),
@@ -1169,11 +1099,8 @@ def sheets(gang: bool) -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
     jk_height = 2 * pitch + jk_box[3] - jk_box[1]
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
     jk_y = (A4[1] - jk_height - 10) / 2
-    labels = (label("A", 0.0 if gang else 1.0), label("B", 0.0 if gang else 1.0))
+    labels = (label("A"), label("B"))
     label_box = polygon_bbox(labels[0].outline)
-    cover_gap, label_gap = (
-        ((0.0, 0.0), (0.0, 0.0)) if gang else ((8.0, 0.0), (6.0, 4.0))
-    )
     return {
         "Card-Jacket_A4_3up": (
             [
@@ -1193,14 +1120,14 @@ def sheets(gang: bool) -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
         "Disk-Cover_A4-landscape_3up": (
             [
                 (cv, Placement(p, False, cv_box))
-                for p in grid((80, 144), A4_LANDSCAPE, 3, 1, cover_gap)
+                for p in grid((80, 144), A4_LANDSCAPE, 3, 1, NO_GAP)
             ],
             A4_LANDSCAPE,
         ),
         "Disk-Label_A4_30up": (
             [
                 (labels[i // 3 % 2], Placement(p, False, label_box))
-                for i, p in enumerate(grid((52, 22), A4, 3, 10, label_gap))
+                for i, p in enumerate(grid((52, 22), A4, 3, 10, NO_GAP))
             ],
             A4,
         ),
@@ -1244,14 +1171,13 @@ def square_sheets(
 SheetSet = dict[str, tuple[list[tuple[Item, Placement]], Point]]
 
 
-def sheet_sets(which: str) -> tuple[SheetSet, SheetSet, str]:
+def sheet_sets(which: str) -> tuple[SheetSet, str]:
     if which == "standard":
-        return standard_glue_sheets(), standard_glue_sheets(), "v4"
+        return standard_glue_sheets(), "v4"
     if which in ("square", "square-standard"):
         glue = STANDARD_GLUE if which == "square-standard" else WIDE_GLUE
-        squares = square_sheets(glue, which == "square-standard")
-        return squares, squares, "v5"
-    return sheets(gang=True), sheets(gang=False), "v4"
+        return square_sheets(glue, which == "square-standard"), "v5"
+    return sheets(), "v4"
 
 
 def item_folder(out_dir: str, key: str) -> Path:
@@ -1262,31 +1188,22 @@ def item_folder(out_dir: str, key: str) -> Path:
 
 
 def main(template: str, out_dir: str, which: str) -> None:
-    home_sheets, shop_sheets, version = sheet_sets(which)
+    home_sheets, version = sheet_sets(which)
     for key, (sheet, page_mm) in home_sheets.items():
         folder = item_folder(out_dir, key)
-        cut = "KissCut" if "Label" in key else "DieCut-Crease"
-        shop_sheet, shop_page = shop_sheets[key]
         render(
             sheet,
             page_mm,
-            "home",
+            False,
             Path(template),
             folder / f"FDS-{key}_HomePrint-Color_{version}.pdf",
         )
         render(
             sheet,
             page_mm,
-            "mono",
+            True,
             Path(template),
             folder / f"FDS-{key}_HomePrint-Mono_{version}.pdf",
-        )
-        render(
-            shop_sheet,
-            shop_page,
-            "shop",
-            Path(template),
-            folder / f"FDS-{key}_CMYK-4x0_{cut}_{version}.pdf",
         )
 
 
