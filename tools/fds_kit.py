@@ -18,22 +18,18 @@ CARD_THICKNESS_MM = 3.0
 TOLERANCE_MM = 1.0
 GUSSET = CARD_THICKNESS_MM + TOLERANCE_MM
 RELIEF_MM = 1.0
-TUCK_CLEARANCE_MM = 1.0
 GLUE_TINT = (0, 0, 0, 0.08)
 ZONE_MARGIN_MM = 1.0
 SQUARE_RELIEF_MM = 2.0
-SQUARE_DUST_FLAP_MM = 8.0
-SQUARE_THUMB_MM = (14.0, 4.0)
 SQUARE_ENVELOPE_NOTCH_MM = (16.0, 6.0)
 SQUARE_JACKET_NOTCH_INSET_MM = 11.0
 ITEM_FOLDERS = {
     "Card-Jacket": "card-jacket",
     "Disk-Envelope": "envelope",
-    "Disk-Case": "case",
     "Disk-Cover": "cover",
 }
-WIDE_GLUE = {"jacket": 15.0, "case": 18.0}
-STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5, "case": 12.0}
+WIDE_GLUE = {"jacket": 15.0}
+STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5}
 ENVELOPE_NEST_GAP_MM = 4.0
 NEST_GAP_MM = 6.0
 COVER_GAP_MM = (4.0, 0.0)
@@ -92,7 +88,6 @@ class Item:
     art: tuple[Element, ...]
     glue: tuple[Point, ...] = field(default_factory=tuple)
     zones: tuple[Polygon, ...] = field(default_factory=tuple)
-    slits: tuple[tuple[Point, Point], ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -147,61 +142,6 @@ BLOCKS: dict[str, Block] = {
                 seg("に"),
             ),
             (seg("差", "さ"), seg("しこんでください。")),
-        ),
-        7.2,
-        center=False,
-    ),
-    "case_title": Block(
-        ((seg("ディスクカード"), seg("専用", "せんよう"), seg("ケース")),),
-        13,
-        boxed=True,
-    ),
-    "case_notice": Block(
-        (
-            (
-                seg("※カードは"),
-                seg("必", "かなら"),
-                seg("ず"),
-                seg("保護", "ほご"),
-                seg("ジャケットに"),
-                seg("入", "い"),
-                seg("れてから"),
-            ),
-            (seg("しまってください。"),),
-        ),
-        8.6,
-        center=False,
-    ),
-    "case_caution": Block(
-        (
-            (
-                seg("※"),
-                seg("直射日光", "ちょくしゃにっこう"),
-                seg("の"),
-                seg("当", "あ"),
-                seg("たる"),
-                seg("所", "ところ"),
-                seg("、"),
-                seg("高温", "こうおん"),
-                seg("・"),
-                seg("多湿", "たしつ"),
-                seg("の"),
-            ),
-            (
-                seg("所", "ところ"),
-                seg("、"),
-                seg("磁気", "じき"),
-                seg("を"),
-                seg("発生", "はっせい"),
-                seg("する"),
-                seg("物", "もの"),
-                seg("の"),
-                seg("近", "ちか"),
-                seg("くには"),
-                seg("置", "お"),
-                seg("かないで"),
-            ),
-            (seg("ください。"),),
         ),
         7.2,
         center=False,
@@ -387,76 +327,6 @@ def envelope(glue: float) -> Item:
     )
 
 
-def case(glue_w: float) -> Item:
-    w, d, h, tuck = 90.0, 10.0, 100.0, 15.0
-    back, side1, front, side2 = glue_w, glue_w + w, glue_w + w + d, glue_w + 2 * w + d
-    end = side2 + d
-    r, c, mid = RELIEF_MM, TUCK_CLEARANCE_MM, glue_w + w / 2
-    outline: Polygon = (
-        (0, 6 + r),
-        (back, r),
-        (back, 0),
-        (mid - 7, 0),
-        (mid, 4),
-        (mid + 7, 0),
-        (side1, 0),
-        (side1 + 0.5, -8),
-        (front - 2.5, -8),
-        (front, 0),
-        (front, -d),
-        (front + c, -d),
-        (front + c + 3.5, -d - tuck),
-        (side2 - c - 3.5, -d - tuck),
-        (side2 - c, -d),
-        (side2, -d),
-        (side2, 0),
-        (side2 + 2.5, -8),
-        (end - 0.5, -8),
-        (end, 0),
-        (end, h),
-        (end - 0.5, h + 8),
-        (side2 + 2.5, h + 8),
-        (side2, h),
-        (front, h),
-        (front - 2.5, h + 8),
-        (side1 + 0.5, h + 8),
-        (side1, h),
-        (side1, h + d),
-        (side1 - c, h + d),
-        (side1 - c - 3.5, h + d + tuck),
-        (back + c + 3.5, h + d + tuck),
-        (back + c, h + d),
-        (back, h + d),
-        (back, h),
-        (back, h - r),
-        (0, h - 6 - r),
-    )
-    creases = (
-        ((back, r), (back, h - r)),
-        *(((x, 0.0), (x, h)) for x in (side1, front, side2)),
-        ((front, 0), (side2, 0)),
-        ((front + c, -d), (side2 - c, -d)),
-        ((side1, 0), (front, 0)),
-        ((side2, 0), (end, 0)),
-        ((side1, h), (front, h)),
-        ((side2, h), (end, h)),
-        ((back, h), (side1, h)),
-        ((back + c, h + d), (side1 - c, h + d)),
-    )
-    m = ZONE_MARGIN_MM
-    zones = (((m, 8 + r), (back - m, 2 + r), (back - m, h - 2 - r), (m, h - 8 - r)),)
-    art = (
-        Clip("case_title", (front + w / 2, 24)),
-        Clip("case_notice", (front + w / 2, 46)),
-        Clip("logo", (front + w / 2, 88)),
-        Clip("warning", (back + w / 2, 32)),
-        Clip("case_caution", (back + w / 2, 78)),
-        Clip("logo", (side1 + d / 2, h / 2), 90),
-        Clip("logo", (side2 + d / 2, h / 2), 90),
-    )
-    return Item(outline, creases, art, ((glue_w / 2, h / 2),), zones)
-
-
 def cover() -> Item:
     w, front, spine_h, back = 80.0, 81.0, 6.0, 57.0
     total = front + spine_h + back
@@ -583,78 +453,6 @@ def envelope_square(glue: float) -> Item:
         ((-glue_x, (f0 + f1) / 2), (w + glue_x, (f0 + f1) / 2)),
         zones,
     )
-
-
-def case_square(glue_w: float) -> Item:
-    w, d, h, tuck, dust = 90.0, 10.0, 100.0, 15.0, SQUARE_DUST_FLAP_MM
-    back, side1, front, side2 = glue_w, glue_w + w, glue_w + w + d, glue_w + 2 * w + d
-    end = side2 + d
-    r = c = SQUARE_RELIEF_MM
-    mid = glue_w + w / 2
-    thumb_w, thumb_d = SQUARE_THUMB_MM
-    outline: Polygon = (
-        (0, r),
-        (back, r),
-        (back, 0),
-        (mid - thumb_w / 2, 0),
-        (mid - thumb_w / 2, thumb_d),
-        (mid + thumb_w / 2, thumb_d),
-        (mid + thumb_w / 2, 0),
-        (side1, 0),
-        (side1, -dust),
-        (front, -dust),
-        (front, -d),
-        (front + c, -d),
-        (front + c, -d - tuck),
-        (side2 - c, -d - tuck),
-        (side2 - c, -d),
-        (side2, -d),
-        (side2, -dust),
-        (end, -dust),
-        (end, h + dust),
-        (side2, h + dust),
-        (side2, h),
-        (front, h),
-        (front, h + dust),
-        (side1, h + dust),
-        (side1, h + d),
-        (side1 - c, h + d),
-        (side1 - c, h + d + tuck),
-        (back + c, h + d + tuck),
-        (back + c, h + d),
-        (back, h + d),
-        (back, h - r),
-        (0, h - r),
-    )
-    creases = (
-        ((back, r), (back, h - r)),
-        *(((x, 0.0), (x, h)) for x in (side1, front, side2)),
-        ((front, 0), (side2, 0)),
-        ((front + c, -d), (side2 - c, -d)),
-        ((side1, 0), (front, 0)),
-        ((side2, 0), (end, 0)),
-        ((side1, h), (front, h)),
-        ((side2, h), (end, h)),
-        ((back, h), (side1, h)),
-        ((back + c, h + d), (side1 - c, h + d)),
-    )
-    slits = (
-        ((front, 0), (front, -dust)),
-        ((side2, 0), (side2, -dust)),
-        ((side1, h), (side1, h + dust)),
-    )
-    m = ZONE_MARGIN_MM
-    zones = (rectangle(m, r + m, back - m, h - r - m),)
-    art = (
-        Clip("case_title", (front + w / 2, 24)),
-        Clip("case_notice", (front + w / 2, 46)),
-        Clip("logo", (front + w / 2, 88)),
-        Clip("warning", (back + w / 2, 32)),
-        Clip("case_caution", (back + w / 2, 78)),
-        Clip("logo", (side1 + d / 2, h / 2), 90),
-        Clip("logo", (side2 + d / 2, h / 2), 90),
-    )
-    return Item(outline, creases, art, ((glue_w / 2, h / 2),), zones, slits)
 
 
 def line_width(line: tuple[Segment, ...], size: float) -> float:
@@ -802,22 +600,6 @@ def polygon_shape(
     return shape
 
 
-def draw_slits(
-    ctx: Context,
-    item: Item,
-    place: Placement,
-    color: tuple[float, ...],
-    width: float,
-) -> None:
-    if not item.slits:
-        return
-    shape = ctx.page.new_shape()
-    for a, b in item.slits:
-        shape.draw_line(to_pt(place.apply(a)), to_pt(place.apply(b)))
-    shape.finish(color=color, width=width, oc=ctx.layers["art"])
-    shape.commit()
-
-
 def draw_clip(ctx: Context, clip: Clip, place: Placement) -> None:
     index, rect = ctx.pages[clip.source]
     rotate = (clip.rotate + (180 if place.flip else 0)) % 360
@@ -859,14 +641,12 @@ def draw_lines(ctx: Context, item: Item, place: Placement) -> None:
         color=WHITE, width=HOME_HALO_WIDTH, closePath=True, oc=ctx.layers["art"]
     )
     halo.commit()
-    draw_slits(ctx, item, place, WHITE, HOME_HALO_WIDTH)
     crease.commit()
     cut = polygon_shape(ctx.page, item.outline, place)
     cut.finish(
         color=LINE_GRAY, width=HOME_LINE_WIDTH, closePath=True, oc=ctx.layers["art"]
     )
     cut.commit()
-    draw_slits(ctx, item, place, LINE_GRAY, HOME_LINE_WIDTH)
 
 
 def draw_zones(ctx: Context, item: Item, place: Placement) -> None:
@@ -969,10 +749,6 @@ def nesting_pitch(outline: Polygon) -> float:
     return max(spans) + NEST_GAP_MM
 
 
-def centered(box: tuple[float, float, float, float], page: Point) -> Point:
-    return (page[0] - (box[2] - box[0])) / 2, (page[1] - (box[3] - box[1]) - 10) / 2
-
-
 def envelope_two_up(env: Item) -> list[tuple[Item, Placement]]:
     box = polygon_bbox(env.outline)
     flap = -box[0]
@@ -987,8 +763,8 @@ def envelope_two_up(env: Item) -> list[tuple[Item, Placement]]:
 
 
 def standard_glue_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
-    jk, cs = jacket(STANDARD_GLUE["jacket"]), case(STANDARD_GLUE["case"])
-    jk_box, cs_box = polygon_bbox(jk.outline), polygon_bbox(cs.outline)
+    jk = jacket(STANDARD_GLUE["jacket"])
+    jk_box = polygon_bbox(jk.outline)
     pitch = nesting_pitch(jk.outline)
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
     jk_y = (A4[1] - (2 * pitch + jk_box[3] - jk_box[1]) - 10) / 2
@@ -1004,16 +780,12 @@ def standard_glue_sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Poin
             envelope_two_up(envelope(STANDARD_GLUE["envelope"])),
             A4,
         ),
-        "Disk-Case_A4-landscape_1up_StdGlue": (
-            [(cs, Placement(centered(cs_box, A4_LANDSCAPE), False, cs_box))],
-            A4_LANDSCAPE,
-        ),
     }
 
 
 def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
-    jk, cs, cv = jacket(WIDE_GLUE["jacket"]), case(WIDE_GLUE["case"]), cover()
-    jk_box, cs_box, cv_box = (polygon_bbox(i.outline) for i in (jk, cs, cv))
+    jk, cv = jacket(WIDE_GLUE["jacket"]), cover()
+    jk_box, cv_box = polygon_bbox(jk.outline), polygon_bbox(cv.outline)
     pitch = nesting_pitch(jk.outline)
     jk_height = 2 * pitch + jk_box[3] - jk_box[1]
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
@@ -1025,10 +797,6 @@ def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
                 for i in range(3)
             ],
             A4,
-        ),
-        "Disk-Case_A4-landscape_1up": (
-            [(cs, Placement(centered(cs_box, A4_LANDSCAPE), False, cs_box))],
-            A4_LANDSCAPE,
         ),
         "Disk-Cover_A4-landscape_3up": (
             [
@@ -1044,8 +812,8 @@ def square_sheets(
     glue: dict[str, float], two_up_envelope: bool
 ) -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
     tag = "Square_StdGlue" if two_up_envelope else "Square"
-    jk, cs = jacket_square(glue["jacket"]), case_square(glue["case"])
-    jk_box, cs_box = polygon_bbox(jk.outline), polygon_bbox(cs.outline)
+    jk = jacket_square(glue["jacket"])
+    jk_box = polygon_bbox(jk.outline)
     pitch = nesting_pitch(jk.outline)
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
     jk_y = (A4[1] - (2 * pitch + jk_box[3] - jk_box[1]) - 10) / 2
@@ -1068,10 +836,6 @@ def square_sheets(
             A4,
         ),
         **envelopes,
-        f"Disk-Case_A4-landscape_1up_{tag}": (
-            [(cs, Placement(centered(cs_box, A4_LANDSCAPE), False, cs_box))],
-            A4_LANDSCAPE,
-        ),
     }
 
 

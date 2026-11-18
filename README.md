@@ -1,6 +1,6 @@
 <div align="center">
 
-<strong>Printable paper jackets, envelopes, cases and covers for Famicom Disk System disk cards.</strong>
+<strong>Printable paper jackets, envelopes and covers for Famicom Disk System disk cards.</strong>
 
 </div>
 
@@ -14,8 +14,7 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item, printed w
 |:-----|:-------|:------|
 | Card jacket | [`sheets/card-jacket/`](sheets/card-jacket/) | Three jackets per sheet that slide over a bare disk card |
 | Envelope | [`sheets/envelope/`](sheets/envelope/) | Two kraft-style pouches per sheet with a long tuck flap, in the `StdGlue` sheets only |
-| Case | [`sheets/case/`](sheets/case/) | A cardstock box with tuck ends |
-| Cover | [`sheets/cover/`](sheets/cover/) | Three obi strips per sheet that wrap the case |
+| Cover | [`sheets/cover/`](sheets/cover/) | Three folded obi strips per sheet |
 
 ## Which file to print
 
@@ -28,7 +27,7 @@ Sheets without `Square` are drawn for a ruler and a craft knife.
 
 ## What you need
 
-- An A4 printer and paper: 120 to 180 g/m2 for jackets, envelopes and covers, 250 to 300 g/m2 for the case
+- An A4 printer and 120 to 180 g/m2 paper
 - A craft knife and a metal ruler, or scissors and an R4 or R5 corner punch for the `Square` sheets
 - A glue stick or 6 to 12 mm double-sided tape
 
@@ -48,7 +47,7 @@ Sheets without `Square` are drawn for a ruler and a craft knife.
 1. Cut every piece out.
 2. Score and fold every dashed line, and test the fit before any glue goes on.
 3. Glue the tinted flaps and press until the glue sets.
-4. On `Square` sheets, round the outer corners with the punch. Use R4 at most on the small case dust flaps.
+4. On `Square` sheets, round the outer corners with the punch.
 
 The folds that wrap a disk leave 4 mm for its 3 mm thickness.
 
