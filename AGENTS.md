@@ -17,6 +17,12 @@ Every piece is finished with one hand punch: the Toke e Crie Furador Cantoneira 
 
 The maker's image shows three uses: rounded corners on cards, a notch that shapes the shoulders of a planner tab, and a notch at each point where an envelope's flap folds meet its edge.
 
+### Where each sheet is punched
+
+| Sheet | Rounded corners | Notches |
+|:------|:----------------|:--------|
+| Cover | All four corners of each cover | Both side edges at the spine, one notch spanning its two fold lines |
+
 ## Hard rules
 
 ### Cutting and folding
