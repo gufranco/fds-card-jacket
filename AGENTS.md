@@ -12,6 +12,10 @@ Every piece is finished with one hand punch: the Toke e Crie Furador Cantoneira 
 | Paper weight | 90 to 220 g/m2 | Same description |
 | Corner radius | Unknown | Not published by the maker |
 | Notch width and depth | Unknown | Not published by the maker |
+| Corner shape | A quarter round that replaces a square corner | Product image on the same listing |
+| Notch shape | A smooth concave scallop with curved shoulders, cut into a straight edge | Same image |
+
+The maker's image shows three uses: rounded corners on cards, a notch that shapes the shoulders of a planner tab, and a notch at each point where an envelope's flap folds meet its edge.
 
 ## Hard rules
 
@@ -20,7 +24,7 @@ Every piece is finished with one hand punch: the Toke e Crie Furador Cantoneira 
 - Every outer corner of every piece is rounded with the finishing punch.
 - Every place where a fold line meets a cut edge gets a notch made with the finishing punch.
 - The corner radius and notch size are unknown. Measure a punched sample and record both in the table above before a sheet depends on either value.
-- Cut and fold lines are straight: no curves. [`tools/check_curves.py`](tools/check_curves.py) checks it.
+- Cut and fold lines are straight: no curves. [`tools/check_curves.py`](tools/check_curves.py) checks it. The only curves on a finished piece come from the finishing punch.
 - Cut lines are as faint as fold lines, and fold dashes stay sparse.
 - A fold that wraps a disk leaves 4 mm: the 3 mm Quick Disk plus 1 mm tolerance.
 - `Square` sheets cut only horizontal and vertical lines. [`tools/check_square_layout.py`](tools/check_square_layout.py) checks it.
