@@ -36,7 +36,7 @@ WIDE_GLUE = {"jacket": 15.0, "case": 18.0}
 STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5, "case": 12.0}
 ENVELOPE_NEST_GAP_MM = 4.0
 NEST_GAP_MM = 6.0
-NO_GAP = (0.0, 0.0)
+COVER_GAP_MM = (4.0, 0.0)
 COLUMN_MM = 0.25
 LATIN = "FB"
 JAPANESE = "HM"
@@ -1033,7 +1033,7 @@ def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
         "Disk-Cover_A4-landscape_3up": (
             [
                 (cv, Placement(p, False, cv_box))
-                for p in grid((80, 144), A4_LANDSCAPE, 3, 1, NO_GAP)
+                for p in grid((80, 144), A4_LANDSCAPE, 3, 1, COVER_GAP_MM)
             ],
             A4_LANDSCAPE,
         ),
