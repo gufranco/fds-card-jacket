@@ -1,6 +1,6 @@
 <div align="center">
 
-<strong>Printable paper jackets, envelopes, cases, covers and labels for Famicom Disk System disk cards.</strong>
+<strong>Printable paper jackets, envelopes, cases and covers for Famicom Disk System disk cards.</strong>
 
 </div>
 
@@ -16,7 +16,6 @@ Every sheet is an A4 PDF in [`sheets/`](sheets/), one folder per item.
 | Envelope | [`sheets/envelope/`](sheets/envelope/) | A kraft-style pouch with a long tuck flap |
 | Case | [`sheets/case/`](sheets/case/) | A cardstock box with tuck ends |
 | Cover | [`sheets/cover/`](sheets/cover/) | Three obi strips per sheet that wrap the case |
-| Labels | [`sheets/labels/`](sheets/labels/) | Thirty side A and side B labels per sheet |
 
 ## Which file to print
 
@@ -31,7 +30,7 @@ Sheets without `Square` are drawn for a ruler and a craft knife.
 
 ## What you need
 
-- An A4 printer and paper: 120 to 180 g/m2 for jackets, envelopes and covers, 250 to 300 g/m2 for the case, sticker paper for labels
+- An A4 printer and paper: 120 to 180 g/m2 for jackets, envelopes and covers, 250 to 300 g/m2 for the case
 - A craft knife and a metal ruler, or scissors and an R4 or R5 corner punch for the `Square` sheets
 - A glue stick or 6 to 12 mm double-sided tape
 

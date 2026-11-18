@@ -32,7 +32,6 @@ ITEM_FOLDERS = {
     "Disk-Envelope": "envelope",
     "Disk-Case": "case",
     "Disk-Cover": "cover",
-    "Disk-Label": "labels",
 }
 WIDE_GLUE = {"jacket": 15.0, "envelope": 15.0, "case": 18.0}
 STANDARD_GLUE = {"jacket": 11.5, "envelope": 6.5, "case": 12.0}
@@ -70,25 +69,10 @@ class Block:
 
 
 @dataclass(frozen=True)
-class Text:
-    center: Point
-    value: str
-    size: float
-    color: tuple[float, ...] = BLACK
-
-
-@dataclass(frozen=True)
 class Line:
     start: Point
     end: Point
     width: float = 0.4
-
-
-@dataclass(frozen=True)
-class Box:
-    origin: Point
-    size: Point
-    fill: tuple[float, ...]
 
 
 @dataclass(frozen=True)
@@ -99,7 +83,7 @@ class Clip:
     scale: float = 1.0
 
 
-Element = Text | Line | Box | Clip
+Element = Line | Clip
 
 
 @dataclass(frozen=True)
@@ -226,7 +210,6 @@ BLOCKS: dict[str, Block] = {
     ),
     "cover_title": Block(((seg("ディスクカード"),),), 15, boxed=True),
     "cover_name": Block(((seg("ソフト"), seg("名", "めい")),), 7.5, center=False),
-    "label_side": Block(((seg("面"),),), 9.0),
     "glue": Block(((seg("のりしろ"),),), 5.0),
 }
 
@@ -489,21 +472,6 @@ def cover() -> Item:
         Clip("warning", (w / 2, front + spine_h + back / 2), 180),
     )
     return Item(outline, creases, art)
-
-
-def label(side: str) -> Item:
-    w, h, block = 52.0, 22.0, 10.0
-    outline: Polygon = ((0, 0), (w, 0), (w, h), (0, h))
-    art = (
-        Box((0, 0), (block, h), fill=RED),
-        Text((block / 2, h / 2 - 3.0), side, 13, color=WHITE),
-        Clip("label_side_white", (block / 2, h / 2 + 4.5)),
-        Clip("logo", (w - 12.5, 5.0), scale=0.75),
-        Clip("cover_name", (block + 7.0, 10.5), scale=0.85),
-        Line((block + 3, 15.0), (w - 3, 15.0), 0.35),
-        Line((block + 3, 19.5), (w - 3, 19.5), 0.35),
-    )
-    return Item(outline, (), art)
 
 
 def rectangle(x0: float, y0: float, x1: float, y1: float) -> Polygon:
@@ -803,10 +771,6 @@ def art_source(
     }
     for name, block in BLOCKS.items():
         pages[name] = (doc.page_count, block_page(doc, block, mono))
-    pages["label_side_white"] = (
-        doc.page_count,
-        block_page(doc, BLOCKS["label_side"], mono, WHITE),
-    )
     pages["glue_gray"] = (
         doc.page_count,
         block_page(doc, BLOCKS["glue"], mono, LINE_GRAY),
@@ -874,51 +838,18 @@ def draw_clip(ctx: Context, clip: Clip, place: Placement) -> None:
     )
 
 
-def draw_text(ctx: Context, text: Text, place: Placement) -> None:
-    half = FONTS[LATIN].text_length(text.value, text.size) / 2 / MM
-    cx, cy = place.apply(text.center)
-    ctx.page.insert_text(
-        to_pt((cx - half, cy + text.size * 0.35 / MM)),
-        text.value,
-        fontsize=text.size,
-        fontname=LATIN,
-        color=resolve(text.color, ctx.mono),
-        oc=ctx.layers["art"],
-    )
-
-
-def draw_shape_element(ctx: Context, element: Line | Box, place: Placement) -> None:
+def draw_line_element(ctx: Context, element: Line, place: Placement) -> None:
     shape = ctx.page.new_shape()
-    if isinstance(element, Line):
-        shape.draw_line(
-            to_pt(place.apply(element.start)), to_pt(place.apply(element.end))
-        )
-        shape.finish(color=BLACK, width=element.width, oc=ctx.layers["art"])
-    else:
-        a = place.apply(element.origin)
-        b = place.apply(
-            (
-                element.origin[0] + element.size[0],
-                element.origin[1] + element.size[1],
-            )
-        )
-        shape.draw_rect(pymupdf.Rect(to_pt(a), to_pt(b)).normalize())
-        shape.finish(
-            color=None,
-            fill=resolve(element.fill, ctx.mono),
-            width=0,
-            oc=ctx.layers["art"],
-        )
+    shape.draw_line(to_pt(place.apply(element.start)), to_pt(place.apply(element.end)))
+    shape.finish(color=BLACK, width=element.width, oc=ctx.layers["art"])
     shape.commit()
 
 
 def draw_element(ctx: Context, element: Element, place: Placement) -> None:
     if isinstance(element, Clip):
         draw_clip(ctx, element, place)
-    elif isinstance(element, Text):
-        draw_text(ctx, element, place)
     else:
-        draw_shape_element(ctx, element, place)
+        draw_line_element(ctx, element, place)
 
 
 def draw_lines(ctx: Context, item: Item, place: Placement) -> None:
@@ -1103,8 +1034,6 @@ def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
     jk_height = 2 * pitch + jk_box[3] - jk_box[1]
     jk_x = (A4[0] - (jk_box[2] - jk_box[0])) / 2
     jk_y = (A4[1] - jk_height - 10) / 2
-    labels = (label("A"), label("B"))
-    label_box = polygon_bbox(labels[0].outline)
     return {
         "Card-Jacket_A4_3up": (
             [
@@ -1127,13 +1056,6 @@ def sheets() -> dict[str, tuple[list[tuple[Item, Placement]], Point]]:
                 for p in grid((80, 144), A4_LANDSCAPE, 3, 1, NO_GAP)
             ],
             A4_LANDSCAPE,
-        ),
-        "Disk-Label_A4_30up": (
-            [
-                (labels[i // 3 % 2], Placement(p, False, label_box))
-                for i, p in enumerate(grid((52, 22), A4, 3, 10, NO_GAP))
-            ],
-            A4,
         ),
     }
 
